@@ -1,0 +1,20 @@
+# Frontend
+client/node_modules/
+client/.env
+client/build/
+node_modules/
+
+# Backend
+server/venv/
+server/.env
+**/__pycache__
+server/*.sqlite3
+**/migrations/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# General
+.DS_Store
+.vscode/
+.idea/
