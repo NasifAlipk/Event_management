@@ -1,18 +1,17 @@
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
-import AuthCard from '../../components/auth/AuthCard';
-import EventOra from "../../assets/images/EventOra.png";
-import { ApiError, TextField } from '../../components/auth/AuthFormFields';
-import { useAuth } from '../../hooks/useAuth';
+import AuthCard from "../../components/auth/AuthCard";
+import { ApiError, TextField } from "../../components/auth/AuthFormFields";
+import { useAuth } from "../../hooks/useAuth";
 
 export default function LoginPage() {
   const [form, setForm] = useState({
-    username: '',
-    password: '',
+    username: "",
+    password: "",
   });
 
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const { login } = useAuth();
@@ -23,22 +22,18 @@ export default function LoginPage() {
     event.preventDefault();
 
     setSubmitting(true);
-    setError('');
+    setError("");
 
     try {
       await login(form);
 
-      const redirectPath =
-        location.state?.from?.pathname || '/dashboard';
+      const redirectPath = location.state?.from?.pathname || "/dashboard";
 
       navigate(redirectPath, {
         replace: true,
       });
     } catch (err) {
-      setError(
-        err.response?.data?.detail ||
-          'Invalid username or password.'
-      );
+      setError(err.response?.data?.detail || "Invalid username or password.");
     } finally {
       setSubmitting(false);
     }
@@ -97,7 +92,7 @@ export default function LoginPage() {
           disabled={submitting}
           className="w-full rounded-lg bg-brand-600 px-4 py-2.5 font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
         >
-          {submitting ? 'Signing in…' : 'Sign in'}
+          {submitting ? "Signing in…" : "Sign in"}
         </button>
       </form>
     </AuthCard>

@@ -1,6 +1,12 @@
+import secrets
+from datetime import timedelta
+
+from django.contrib.auth.hashers import check_password, make_password
 from django.conf import settings
-from django.shortcuts import get_object_or_404
+from django.core.mail import send_mail
 from django.middleware.csrf import get_token
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from rest_framework import status
 from rest_framework.permissions import AllowAny
@@ -9,9 +15,41 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User
+from .models import EmailVerificationCode, User
 from .permissions import IsAdministrator
-from .serializers import LoginSerializer, RegisterSerializer, RoleUpdateSerializer, UserSerializer
+from .serializers import (
+    LoginSerializer,
+    RegisterSerializer,
+    ResendVerificationCodeSerializer,
+    RoleUpdateSerializer,
+    UserSerializer,
+    VerifyEmailSerializer,
+)
+
+
+OTP_EXPIRY_MINUTES = 10
+MAX_OTP_ATTEMPTS = 5
+
+
+def send_verification_code(user):
+    code = f'{secrets.randbelow(1_000_000):06d}'
+    EmailVerificationCode.objects.filter(user=user).delete()
+    EmailVerificationCode.objects.create(
+        user=user,
+        code_hash=make_password(code),
+        expires_at=timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES),
+    )
+    send_mail(
+        subject='Verify your Eventora email',
+        message=(
+            f'Your Eventora verification code is {code}. '
+            f'It expires in {OTP_EXPIRY_MINUTES} minutes.'
+        ),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
 
 def set_auth_cookies(response, access, refresh=None):
     cookie_options = {
@@ -48,12 +86,60 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        
+        send_verification_code(user)
+        return Response(
+            {'detail': 'Verification code sent to your email.', 'email': user.email},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class VerifyEmailView(APIView):
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def post(self, request):
+        serializer = VerifyEmailSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        user = get_object_or_404(User, email__iexact=email)
+
+        if user.is_active:
+            return Response({'detail': 'This email is already verified.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        verification = EmailVerificationCode.objects.filter(user=user).first()
+        if not verification or verification.expires_at <= timezone.now():
+            return Response({'detail': 'This code has expired. Request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+        if verification.attempts >= MAX_OTP_ATTEMPTS:
+            return Response({'detail': 'Too many attempts. Request a new code.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not check_password(serializer.validated_data['code'], verification.code_hash):
+            verification.attempts += 1
+            verification.save(update_fields=['attempts'])
+            return Response({'detail': 'The verification code is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.is_active = True
+        user.save(update_fields=['is_active'])
+        verification.delete()
         refresh = RefreshToken.for_user(user)
         refresh['role'] = user.role
-        response = Response({'user': UserSerializer(user).data}, status=status.HTTP_201_CREATED)
+        response = Response({'user': UserSerializer(user).data})
         set_auth_cookies(response, refresh.access_token, refresh)
         return response
+
+
+class ResendVerificationCodeView(APIView):
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def post(self, request):
+        serializer = ResendVerificationCodeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = get_object_or_404(User, email__iexact=serializer.validated_data['email'])
+
+        if user.is_active:
+            return Response({'detail': 'This email is already verified.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        send_verification_code(user)
+        return Response({'detail': 'A new verification code has been sent.'})
 
 
 class LoginView(APIView):

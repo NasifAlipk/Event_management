@@ -1,7 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.db import models
-from django.utils import timezone
 
 
 class User(AbstractUser):
@@ -21,7 +20,11 @@ class User(AbstractUser):
 
 
 class EmailVerificationCode(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='verification_codes')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='verification_codes',
+    )
     code_hash = models.CharField(max_length=128)
     expires_at = models.DateTimeField()
     attempts = models.PositiveSmallIntegerField(default=0)
@@ -29,7 +32,3 @@ class EmailVerificationCode(models.Model):
 
     class Meta:
         ordering = ('-created_at',)
-
-    @property
-    def has_expired(self):
-        return timezone.now() >= self.expires_at

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 
-import { authApi } from '../api/auth';
-import { AuthContext } from './authContext';
+import { authApi } from "../api/auth";
+import { AuthContext } from "./authContext";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -53,12 +53,8 @@ export function AuthProvider({ children }) {
         setUser(null);
       },
     }),
-    [user, isLoading]
+    [user, isLoading],
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

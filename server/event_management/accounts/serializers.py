@@ -28,6 +28,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        validated_data['is_active'] = False
         return User.objects.create_user(**validated_data)
 
 
@@ -48,3 +49,7 @@ class RoleUpdateSerializer(serializers.ModelSerializer):
 class VerifyEmailSerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.RegexField(r'^\d{6}$', error_messages={'invalid': 'Enter the six-digit verification code.'})
+
+
+class ResendVerificationCodeSerializer(serializers.Serializer):
+    email = serializers.EmailField()
