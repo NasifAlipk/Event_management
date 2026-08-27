@@ -1,8 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-
-import AuthCard from "../../components/auth/AuthCard";
-import { ApiError, TextField } from "../../components/auth/AuthFormFields";
+import Eventora from "../../assets/images/EventOra.png";
+import { ApiError } from "../../components/auth/AuthFormFields";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function LoginPage() {
@@ -49,52 +48,67 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthCard
-      title="Welcome back"
-      subtitle="Sign in to access your events."
-      footer={
-        <>
-          <span>New to Eventora? </span>
+    <div className="relative flex w-full max-w-4xl items-center justify-center gap-8">
+      <div className="w-full max-w-md rounded-xl bg-gray-900/80 p-8 pt-6 shadow-2xl backdrop-blur-sm sm:p-10 sm:pt-7">
+        <div className="mb-7">
+          <p className="text-2xl font-medium text-white">Hola, to Eventora</p>
+          <p className="mt-1 text-gray-400">Login now to access your account!</p>
+        </div>
 
-          <Link
-            className="font-semibold text-brand-600 hover:text-brand-700"
-            to="/register"
-          >
+        <form className="space-y-4" onSubmit={submit}>
+          <label className="block text-sm text-gray-300">
+            Enter your username*
+            <input
+              className="mt-2 block w-full rounded-md border border-gray-700 bg-gray-800 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
+              name="username"
+              type="text"
+              value={form.username}
+              onChange={handleChange}
+              required
+              autoComplete="username"
+              placeholder="Username"
+            />
+          </label>
+
+          <label className="block text-sm text-gray-300">
+            Enter your password
+            <input
+              className="mt-2 block w-full rounded-md border border-gray-700 bg-gray-800 px-4 py-3 text-white outline-none transition placeholder:text-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              required
+              autoComplete="current-password"
+              placeholder="Password"
+            />
+          </label>
+
+          <ApiError error={error} />
+
+          <div className="flex items-center justify-between gap-4 pt-2">
+            <span className="text-sm text-gray-400">Need an account?</span>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded-md bg-purple-600 px-5 py-2 font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submitting ? "Signing in…" : "Sign in →"}
+            </button>
+          </div>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-400">
+          New to Eventora?{" "}
+          <Link className="font-semibold text-purple-400 hover:text-purple-300" to="/register">
             Create an account
           </Link>
-        </>
-      }
-    >
-      <form className="space-y-4" onSubmit={submit}>
-        <TextField
-          label="Username"
-          name="username"
-          value={form.username}
-          onChange={handleChange}
-          required
-          autoComplete="username"
-        />
+        </p>
+      </div>
 
-        <TextField
-          label="Password"
-          name="password"
-          type="password"
-          value={form.password}
-          onChange={handleChange}
-          required
-          autoComplete="current-password"
-        />
-
-        <ApiError error={error} />
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-lg bg-brand-600 px-4 py-2.5 font-semibold text-white hover:bg-brand-700 disabled:opacity-60"
-        >
-          {submitting ? "Signing in…" : "Sign in"}
-        </button>
-      </form>
-    </AuthCard>
+      <div className="hidden flex-1 items-center justify-center md:flex">
+        <img src={Eventora} alt="Eventora" className="mb-8 w-52 object-contain opacity-100" />
+      </div>
+    </div>
   );
 }

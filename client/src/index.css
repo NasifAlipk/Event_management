@@ -7,6 +7,6 @@
 }
 
 @layer base {
-  body { @apply m-0 min-w-80 bg-slate-50 font-sans text-slate-900 antialiased; }
+  body { @apply m-0 min-w-80 bg-[#1a1728] font-sans text-white antialiased; }
   button, input { font: inherit; }
 }
