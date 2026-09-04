@@ -9,4 +9,13 @@ export const authApi = {
   resendVerificationCode: (email) =>
     api.post("/auth/resend-verification-code/", { email }),
   logout: () => api.post("/auth/logout/"),
+  adminForgotPassword: (email) =>
+    api.post("/auth/admin/forgot-password/", { email }),
+  adminResetPassword: (uid, token, password) =>
+    api.post(`/auth/admin/reset-password/${uid}/${token}/`, { password }),
+  adminChangePassword: (current_password, new_password) =>
+    api.post("/auth/admin/change-password/", {
+      current_password,
+      new_password,
+    }),
 };

@@ -65,6 +65,12 @@ export default function Login() {
             {submitting ? "Signing in…" : "Admin sign in →"}
           </button>
         </form>
+        <Link
+          to="/admin/forgot-password"
+          className="mt-4 block text-right text-sm text-[#00ff85]"
+        >
+          Forgot password?
+        </Link>
         <p className="mt-6 text-center text-sm text-gray-400">
           <Link to="/login" className="text-[#00ff85]">
             Back to user login

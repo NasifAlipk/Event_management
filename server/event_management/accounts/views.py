@@ -2,6 +2,10 @@ import secrets
 from datetime import timedelta
 
 from django.contrib.auth.hashers import check_password, make_password
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib.auth.password_validation import validate_password
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
 from django.conf import settings
 from django.core.mail import send_mail
 from django.middleware.csrf import get_token
@@ -29,6 +33,7 @@ from .serializers import (
 
 OTP_EXPIRY_MINUTES = 10
 MAX_OTP_ATTEMPTS = 5
+password_reset_token = PasswordResetTokenGenerator()
 
 
 def send_verification_code(user):
@@ -66,8 +71,6 @@ def set_auth_cookies(response, access, refresh=None):
 def clear_auth_cookies(response):
     response.delete_cookie(settings.JWT_ACCESS_COOKIE, path='/', samesite=settings.JWT_COOKIE_SAMESITE)
     response.delete_cookie(settings.JWT_REFRESH_COOKIE, path='/', samesite=settings.JWT_COOKIE_SAMESITE)
-
-
 
 
 class CsrfTokenView(APIView):
@@ -206,3 +209,53 @@ class UserRoleView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({'user': UserSerializer(user).data})
+
+
+class AdminForgotPasswordView(APIView):
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        user = User.objects.filter(email__iexact=email, role=User.Role.ADMIN, is_active=True).first()
+        if user:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = password_reset_token.make_token(user)
+            reset_url = f"{settings.FRONTEND_URL}/admin/reset-password/{uid}/{token}"
+            send_mail('Reset your Eventora admin password', f'Use this link to reset your password: {reset_url}', settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+        return Response({'detail': 'If that administrator email exists, a reset link has been sent.'})
+
+
+class AdminResetPasswordView(APIView):
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def post(self, request, uid, token):
+        try:
+            user = User.objects.get(pk=urlsafe_base64_decode(uid).decode())
+        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+            return Response({'detail': 'This reset link is invalid or expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not password_reset_token.check_token(user, token) or user.role != User.Role.ADMIN:
+            return Response({'detail': 'This reset link is invalid or expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        password = request.data.get('password', '')
+        if len(password) < 8:
+            return Response({'detail': 'Password must be at least 8 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+        validate_password(password, user)
+        user.set_password(password)
+        user.save(update_fields=['password'])
+        return Response({'detail': 'Password changed successfully.'})
+
+
+class AdminChangePasswordView(APIView):
+    permission_classes = (IsAdministrator,)
+
+    def post(self, request):
+        if not request.user.check_password(request.data.get('current_password', '')):
+            return Response({'detail': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+        password = request.data.get('new_password', '')
+        if len(password) < 8:
+            return Response({'detail': 'New password must be at least 8 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+        validate_password(password, request.user)
+        request.user.set_password(password)
+        request.user.save(update_fields=['password'])
+        return Response({'detail': 'Password changed successfully.'})

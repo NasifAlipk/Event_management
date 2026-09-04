@@ -10,6 +10,9 @@ from .views import (
     ResendVerificationCodeView,
     UserRoleView,
     VerifyEmailView,
+    AdminForgotPasswordView,
+    AdminResetPasswordView,
+    AdminChangePasswordView,
 )
 
 urlpatterns = [
@@ -22,4 +25,7 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('me/', MeView.as_view(), name='me'),
     path('users/<int:user_id>/role/', UserRoleView.as_view(), name='user-role'),
+    path('admin/forgot-password/', AdminForgotPasswordView.as_view(), name='admin-forgot-password'),
+    path('admin/reset-password/<uid>/<token>/', AdminResetPasswordView.as_view(), name='admin-reset-password'),
+    path('admin/change-password/', AdminChangePasswordView.as_view(), name='admin-change-password'),
 ]

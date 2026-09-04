@@ -13,16 +13,20 @@ import AdminProtectedRoute from "./components/admin/AdminProtectedRoute.jsx";
 import AdminLoginPage from "./pages/admin/Login.jsx";
 import AdminHomePage from "./pages/admin/Home.jsx";
 import AdminProfilePage from "./pages/admin/Profile.jsx";
+import AdminForgotPassword from "./pages/admin/ForgotPassword.jsx";
+import AdminResetPassword from "./pages/admin/ResetPassword.jsx";
 
 function App() {
   return (
     <Routes>
       <Route element={<AuthLayout />}>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage/>} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
       </Route>
       <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+      <Route path="/admin/reset-password/:uid/:token" element={<AdminResetPassword />} />
       <Route element={<AdminProtectedRoute />}>
         <Route path="/admin" element={<AdminHomePage />} />
         <Route path="/admin/profile" element={<AdminProfilePage />} />

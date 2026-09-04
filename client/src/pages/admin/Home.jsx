@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Settings, ShieldCheck, Users } from "lucide-react";
+import { ShieldCheck, Users } from "lucide-react";
 import Layout from "../../components/layout/admin/Layout";
 import api from "../../api/client";
 import { useAuth } from "../../hooks/useAuth";
@@ -63,13 +63,11 @@ export default function Home() {
             <table className="w-full min-w-[650px] text-left text-sm">
               <thead className="border-b border-white/10 text-gray-400">
                 <tr>
-                  {["Username", "Email", "Role"].map(
-                    (heading) => (
-                      <th key={heading} className="px-3 py-3">
-                        {heading}
-                      </th>
-                    ),
-                  )}
+                  {["Username", "Email", "Role"].map((heading) => (
+                    <th key={heading} className="px-3 py-3">
+                      {heading}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
