@@ -16,7 +16,8 @@ export default function Home() {
   const displayName = user?.first_name || user?.username || "there";
 
   return (
-    <><Header /><main className="min-h-screen overflow-hidden bg-[#1a1728] px-5 pb-12 pt-24 text-white sm:px-8 lg:px-12">
+    <><Header />
+    <main className="min-h-screen overflow-hidden bg-[#1a1728] px-5 pb-12 pt-24 text-white sm:px-8 lg:px-12">
       <div className="mx-auto max-w-6xl">
         <section className="grid items-center gap-12 py-8 lg:grid-cols-[1.1fr_.9fr] lg:py-16">
           <div>

@@ -52,6 +52,8 @@ export function AuthProvider({ children }) {
 
         setUser(null);
       },
+
+      updateUser: (updatedUser) => setUser(updatedUser),
     }),
     [user, isLoading],
   );

@@ -52,7 +52,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-xl bg-gray-900/80 p-8 pt-6 shadow-2xl backdrop-blur-sm sm:p-10 sm:pt-7">
         <div className="mb-7">
           <p className="text-2xl font-medium text-white">Hola, to Eventora</p>
-          <p className="mt-1 text-gray-400">Login now to access your account!</p>
+          <p className="mt-1 text-gray-400">
+            Login now to access your account!
+          </p>
         </div>
 
         <form className="space-y-4" onSubmit={submit}>
@@ -86,6 +88,13 @@ export default function LoginPage() {
 
           <ApiError error={error} />
 
+          <Link
+            to="/forgot-password"
+            className="mt-4 block text-right text-sm text-purple-400 hover:text-purple-300"
+          >
+            Forgot password?
+          </Link>
+
           <div className="flex items-center justify-between gap-4 pt-2">
             <span className="text-sm text-gray-400">Need an account?</span>
             <button
@@ -93,21 +102,28 @@ export default function LoginPage() {
               disabled={submitting}
               className="rounded-md bg-purple-600 px-5 py-2 font-semibold text-white transition hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? "Signing in…" : "Sign in →"}
+              {submitting ? "Signing in…" : "Sign in"}
             </button>
           </div>
         </form>
 
         <p className="mt-6 text-center text-sm text-gray-400">
           New to Eventora?{" "}
-          <Link className="font-semibold text-purple-400 hover:text-purple-300" to="/register">
+          <Link
+            className="font-semibold text-purple-400 hover:text-purple-300"
+            to="/register"
+          >
             Create an account
           </Link>
         </p>
       </div>
 
       <div className="hidden flex-1 items-center justify-center md:flex">
-        <img src={Eventora} alt="Eventora" className="mb-8 w-52 object-contain opacity-100" />
+        <img
+          src={Eventora}
+          alt="Eventora"
+          className="mb-8 w-52 object-contain opacity-100"
+        />
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { LayoutDashboard, UserRound, LogOut } from "lucide-react";
 import { useAuth } from "../../../hooks/useAuth";
 
 export default function Layout({ children }) {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const location = useLocation();
   const item = (path, label, Icon) => (
     <Link
@@ -22,8 +22,35 @@ export default function Layout({ children }) {
         </h2>
         <nav className="space-y-2">
           {item("/admin", "Dashboard", LayoutDashboard)}
+          {[
+            "Customers",
+            "Applications",
+            "Events",
+            "Tickets",
+            "Coupons",
+            "Achievements",
+            "Finance",
+            "Subscription",
+          ].map((label) => (
+            <button
+              key={label}
+              type="button"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-500 cursor-not-allowed"
+            >
+              {label}
+            </button>
+          ))}
           {item("/admin/profile", "Profile", UserRound)}
         </nav>
+        <Link
+          to="/admin/profile"
+          className="mt-10 block border-t border-white/10 pt-5"
+        >
+          <p className="truncate text-sm font-semibold text-white">
+            {user?.first_name || user?.username}
+          </p>
+          <p className="truncate text-xs text-gray-400">{user?.email}</p>
+        </Link>
         <button
           onClick={logout}
           className="mt-10 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-red-300 hover:bg-white/10"

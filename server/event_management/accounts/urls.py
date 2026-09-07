@@ -13,6 +13,8 @@ from .views import (
     AdminForgotPasswordView,
     AdminResetPasswordView,
     AdminChangePasswordView,
+    ForgotPasswordView,
+    ResetPasswordView,
 )
 
 urlpatterns = [
@@ -28,4 +30,6 @@ urlpatterns = [
     path('admin/forgot-password/', AdminForgotPasswordView.as_view(), name='admin-forgot-password'),
     path('admin/reset-password/<uid>/<token>/', AdminResetPasswordView.as_view(), name='admin-reset-password'),
     path('admin/change-password/', AdminChangePasswordView.as_view(), name='admin-change-password'),
+    path('forgot-password/', ForgotPasswordView.as_view(), name='forgot-password'),
+    path('reset-password/<uid>/<token>/', ResetPasswordView.as_view(), name='reset-password'),
 ]

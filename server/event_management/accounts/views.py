@@ -259,3 +259,35 @@ class AdminChangePasswordView(APIView):
         request.user.set_password(password)
         request.user.save(update_fields=['password'])
         return Response({'detail': 'Password changed successfully.'})
+
+
+class ForgotPasswordView(APIView):
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def post(self, request):
+        email = request.data.get('email', '').strip()
+        user = User.objects.filter(email__iexact=email, is_active=True).first()
+        if user:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = password_reset_token.make_token(user)
+            reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
+            send_mail('Reset your Eventora password', f'Use this link to reset your password: {reset_url}', settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+        return Response({'detail': 'If that email exists, a reset link has been sent.'})
+
+
+class ResetPasswordView(AdminResetPasswordView):
+    def post(self, request, uid, token):
+        try:
+            user = User.objects.get(pk=urlsafe_base64_decode(uid).decode())
+        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+            return Response({'detail': 'This reset link is invalid or expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not password_reset_token.check_token(user, token):
+            return Response({'detail': 'This reset link is invalid or expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        password = request.data.get('password', '')
+        if len(password) < 8:
+            return Response({'detail': 'Password must be at least 8 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+        validate_password(password, user)
+        user.set_password(password)
+        user.save(update_fields=['password'])
+        return Response({'detail': 'Password changed successfully.'})

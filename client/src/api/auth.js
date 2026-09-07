@@ -18,4 +18,8 @@ export const authApi = {
       current_password,
       new_password,
     }),
+  adminProfile: (data) => api.patch("/admin/profile/", data),
+  forgotPassword: (email) => api.post("/auth/forgot-password/", { email }),
+  resetPassword: (uid, token, password) =>
+    api.post(`/auth/reset-password/${uid}/${token}/`, { password }),
 };

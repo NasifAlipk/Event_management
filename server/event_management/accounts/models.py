@@ -10,6 +10,7 @@ class User(AbstractUser):
         ADMIN = 'ADMIN', 'Administrator'
 
     email = models.EmailField(unique=True)
+    profile_picture = models.TextField(blank=True, default='')
     role = models.CharField(max_length=16, choices=Role.choices, default=Role.USER)
 
     def save(self, *args, **kwargs):
