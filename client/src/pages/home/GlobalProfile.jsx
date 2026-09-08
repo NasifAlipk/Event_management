@@ -2,7 +2,7 @@ import { CalendarDays, MapPin, Pencil } from "lucide-react";
 
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { authApi } from "../../api/auth";
+import { authApi } from "../../services/auth";
 import Header from "../../components/home/Header";
 
 export default function GlobalProfile() {

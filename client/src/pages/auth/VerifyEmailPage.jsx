@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { authApi } from "../../api/auth";
+import { authApi } from "../../services/auth";
 import AuthCard from "../../components/auth/AuthCard";
 import { ApiError, TextField } from "../../components/auth/AuthFormFields";
 import { useAuth } from "../../hooks/useAuth";

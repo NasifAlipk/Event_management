@@ -3,6 +3,7 @@ import { useState } from "react";
 import Eventora from "../../assets/images/EventOra.png";
 import { ApiError } from "../../components/auth/AuthFormFields";
 import { useAuth } from "../../hooks/useAuth";
+import GoogleButton from "../../components/auth/GoogleButton";
 
 export default function LoginPage() {
   const [form, setForm] = useState({
@@ -46,6 +47,8 @@ export default function LoginPage() {
       [name]: value,
     }));
   };
+
+  const handleGoogleError = (message) => setError(message);
 
   return (
     <div className="relative flex w-full max-w-4xl items-center justify-center gap-8">
@@ -106,6 +109,9 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
+
+        <div className="my-5 flex items-center gap-3 text-xs text-gray-500"><span className="h-px flex-1 bg-gray-700" />OR<span className="h-px flex-1 bg-gray-700" /></div>
+        <GoogleButton onError={handleGoogleError} onSuccess={() => navigate(location.state?.from?.pathname || "/dashboard", { replace: true })} />
 
         <p className="mt-6 text-center text-sm text-gray-400">
           New to Eventora?{" "}

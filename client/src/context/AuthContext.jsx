@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import { authApi } from "../api/auth";
+import { authApi } from "../services/auth";
 import { AuthContext } from "./authContext";
 
 export function AuthProvider({ children }) {
@@ -33,6 +33,12 @@ export function AuthProvider({ children }) {
       login: async (credentials) => {
         const { data } = await authApi.login(credentials);
 
+        setUser(data.user);
+      },
+
+      loginWithGoogle: async (googleUser) => {
+        const token = await googleUser.getIdToken();
+        const { data } = await authApi.googleLogin(token);
         setUser(data.user);
       },
 

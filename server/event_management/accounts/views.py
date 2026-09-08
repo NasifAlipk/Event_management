@@ -1,4 +1,9 @@
 import secrets
+import os
+import json
+from pathlib import Path
+import firebase_admin
+from firebase_admin import auth as firebase_auth, credentials
 from datetime import timedelta
 
 from django.contrib.auth.hashers import check_password, make_password
@@ -155,6 +160,50 @@ class LoginView(APIView):
         response = Response({'user': UserSerializer(serializer.user).data})
         set_auth_cookies(response, serializer.validated_data['access'], serializer.validated_data['refresh'])
         return response
+
+
+class GoogleLoginView(APIView):
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def post(self, request):
+        id_token = request.data.get('id_token')
+        if not id_token:
+            return Response({'detail': 'Google identity token is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            if not firebase_admin._apps:
+                credentials_value = os.getenv('FIREBASE_CREDENTIALS')
+                if not credentials_value:
+                    return Response({'detail': 'Firebase server credentials are not configured.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+                if credentials_value.strip().startswith('{'):
+                    firebase_admin.initialize_app(credentials.Certificate(json.loads(credentials_value)))
+                else:
+                    credentials_path = Path(credentials_value)
+                    if not credentials_path.is_absolute():
+                        credentials_path = settings.BASE_DIR / credentials_path
+                    if not credentials_path.is_file():
+                        return Response({'detail': 'Firebase service-account file was not found on the server.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+                    firebase_admin.initialize_app(credentials.Certificate(str(credentials_path)))
+            decoded = firebase_auth.verify_id_token(id_token)
+            email = decoded.get('email')
+            if not email:
+                return Response({'detail': 'Google account has no email address.'}, status=status.HTTP_400_BAD_REQUEST)
+            user = User.objects.filter(email__iexact=email).first()
+            if not user:
+                username = email.split('@')[0]
+                if User.objects.filter(username=username).exists():
+                    username = f"{username}_{decoded.get('uid', secrets.token_hex(3))[:6]}"
+                user = User.objects.create_user(username=username, email=email, first_name=decoded.get('name', ''), profile_picture=decoded.get('picture', ''), is_active=True)
+            if not user.is_active:
+                user.is_active = True
+                user.save(update_fields=['is_active'])
+            refresh = RefreshToken.for_user(user)
+            refresh['role'] = user.role
+            response = Response({'user': UserSerializer(user).data})
+            set_auth_cookies(response, refresh.access_token, refresh)
+            return response
+        except Exception:
+            return Response({'detail': 'Google authentication failed.'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class RefreshView(APIView):

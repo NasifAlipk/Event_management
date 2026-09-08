@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import Layout from "../../components/layout/admin/Layout";
-import { authApi } from "../../api/auth";
+import { authApi } from "../../services/auth";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function Profile() {

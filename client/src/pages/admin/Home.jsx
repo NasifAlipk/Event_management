@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Users } from "lucide-react";
 import Layout from "../../components/layout/admin/Layout";
-import api from "../../api/client";
+import api from "../../services/api";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function Home() {

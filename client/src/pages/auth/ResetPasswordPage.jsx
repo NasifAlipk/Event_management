@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import Eventora from "../../assets/images/EventOra.png";
-import { authApi } from "../../api/auth";
+import { authApi } from "../../services/auth";
 
 export default function ResetPasswordPage() {
   const { uid, token } = useParams();
