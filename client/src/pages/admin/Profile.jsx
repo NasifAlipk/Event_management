@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Layout from "../../components/layout/admin/Profile/Layout";
+import Layout from "../../components/layout/admin/Layout";
 import { authApi } from "../../api/auth";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -201,9 +201,6 @@ export default function Profile() {
         </form>
         {message && <p className="mt-4 text-sm text-[#00ff85]">{message}</p>}
         {error && <p className="mt-4 text-sm text-red-300">{error}</p>}
-        <Link to="/admin" className="mt-8 inline-block text-[#00ff85]">
-          ← Back to admin dashboard
-        </Link>
       </section>
     </Layout>
   );

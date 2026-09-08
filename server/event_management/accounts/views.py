@@ -200,6 +200,16 @@ class MeView(APIView):
         return Response({'user': UserSerializer(request.user).data})
 
 
+class ProfileView(APIView):
+    def patch(self, request):
+        user = request.user
+        for field in ('username', 'first_name', 'last_name', 'profile_picture'):
+            if field in request.data:
+                setattr(user, field, request.data[field])
+        user.save()
+        return Response({'user': UserSerializer(user).data})
+
+
 class UserRoleView(APIView):
     permission_classes = (IsAdministrator,)
 

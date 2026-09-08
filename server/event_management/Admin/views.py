@@ -30,3 +30,9 @@ class AdminUsersView(APIView):
     def get(self, request):
         users = User.objects.order_by("-last_login", "-date_joined")
         return Response({"users": UserSerializer(users, many=True).data})
+
+
+class AdminCustomersView(AdminUsersView):
+    def get(self, request):
+        users = User.objects.filter(role=User.Role.USER).order_by("-last_login", "-date_joined")
+        return Response({"users": UserSerializer(users, many=True).data})

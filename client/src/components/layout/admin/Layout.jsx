@@ -1,5 +1,17 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, UserRound, LogOut } from "lucide-react";
+import {
+  BadgeDollarSign,
+  BarChart3,
+  CalendarDays,
+  ClipboardList,
+  Coins,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Ticket,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { useAuth } from "../../../hooks/useAuth";
 
 export default function Layout({ children }) {
@@ -23,23 +35,28 @@ export default function Layout({ children }) {
         <nav className="space-y-2">
           {item("/admin", "Dashboard", LayoutDashboard)}
           {[
-            "Customers",
-            "Applications",
-            "Events",
-            "Tickets",
-            "Coupons",
-            "Achievements",
-            "Finance",
-            "Subscription",
-          ].map((label) => (
-            <button
-              key={label}
-              type="button"
-              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-500 cursor-not-allowed"
-            >
-              {label}
-            </button>
-          ))}
+            ["Customers", Users, "/admin/customers"],
+            ["Applications", ClipboardList],
+            ["Events", CalendarDays],
+            ["Tickets", Ticket],
+            ["Coupons", BadgeDollarSign],
+            ["Achievements", BarChart3],
+            ["Finance", Coins],
+            ["Subscription", Settings],
+          ].map(([label, Icon, path]) =>
+            path ? (
+              item(path, label, Icon)
+            ) : (
+              <button
+                key={label}
+                type="button"
+                className="flex w-full cursor-not-allowed items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-500"
+              >
+                <Icon size={18} />
+                {label}
+              </button>
+            ),
+          )}
           {item("/admin/profile", "Profile", UserRound)}
         </nav>
         <Link
