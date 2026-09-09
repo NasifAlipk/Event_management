@@ -65,4 +65,7 @@ class AdminOrganizerApplicationDetailView(APIView):
         if application.status == OrganizerApplication.Status.APPROVED:
             application.user.role = application.user.Role.ORGANIZER
             application.user.save(update_fields=("role",))
+        elif application.status == OrganizerApplication.Status.REJECTED:
+            application.user.role = application.user.Role.USER
+            application.user.save(update_fields=("role",))
         return Response({"application": OrganizerApplicationSerializer(application).data})

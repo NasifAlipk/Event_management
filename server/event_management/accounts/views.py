@@ -1,6 +1,7 @@
 import secrets
 import os
 import json
+import logging
 from pathlib import Path
 import firebase_admin
 from firebase_admin import auth as firebase_auth, credentials
@@ -39,6 +40,7 @@ from .serializers import (
 OTP_EXPIRY_MINUTES = 10
 MAX_OTP_ATTEMPTS = 5
 password_reset_token = PasswordResetTokenGenerator()
+logger = logging.getLogger(__name__)
 
 
 def send_verification_code(user):
@@ -202,8 +204,10 @@ class GoogleLoginView(APIView):
             response = Response({'user': UserSerializer(user).data})
             set_auth_cookies(response, refresh.access_token, refresh)
             return response
-        except Exception:
-            return Response({'detail': 'Google authentication failed.'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as exc:
+            logger.exception('Google authentication failed while verifying the Firebase token.')
+            detail = str(exc) if settings.DEBUG else 'Google authentication failed.'
+            return Response({'detail': detail}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class RefreshView(APIView):
