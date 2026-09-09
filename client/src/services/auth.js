@@ -5,6 +5,7 @@ export const authApi = {
   me: () => api.get("/auth/me/"),
   profile: (data) => api.patch("/auth/profile/", data),
   login: (credentials) => api.post("/auth/login/", credentials),
+  adminLogin: (credentials) => api.post("/auth/admin/login/", credentials),
   googleLogin: (idToken) => api.post("/auth/google/", { id_token: idToken }),
   register: (details) => api.post("/auth/register/", details),
   verifyEmail: (details) => api.post("/auth/verify-email/", details),

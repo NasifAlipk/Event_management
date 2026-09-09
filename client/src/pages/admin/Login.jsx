@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Eventoraslip from "../../assets/images/Eventoraslip.png";
 import { useAuth } from "../../hooks/useAuth";
+import { authApi } from "../../services/auth";
 
 export default function Login() {
-  const { login } = useAuth();
+  const { updateUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ username: "", password: "" });
@@ -15,7 +16,8 @@ export default function Login() {
     setSubmitting(true);
     setError("");
     try {
-      await login(form);
+      const { data } = await authApi.adminLogin(form);
+      updateUser(data.user);
       navigate(location.state?.from?.pathname || "/admin", { replace: true });
     } catch (err) {
       setError(err.response?.data?.detail || "Administrator login failed.");

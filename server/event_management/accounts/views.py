@@ -29,6 +29,7 @@ from .models import EmailVerificationCode, User
 from .permissions import IsAdministrator
 from .serializers import (
     LoginSerializer,
+    AdminLoginSerializer,
     RegisterSerializer,
     ResendVerificationCodeSerializer,
     RoleUpdateSerializer,
@@ -158,6 +159,15 @@ class LoginView(APIView):
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        response = Response({'user': UserSerializer(serializer.user).data})
+        set_auth_cookies(response, serializer.validated_data['access'], serializer.validated_data['refresh'])
+        return response
+
+
+class AdminLoginView(LoginView):
+    def post(self, request):
+        serializer = AdminLoginSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         response = Response({'user': UserSerializer(serializer.user).data})
         set_auth_cookies(response, serializer.validated_data['access'], serializer.validated_data['refresh'])

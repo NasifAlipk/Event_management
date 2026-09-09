@@ -25,6 +25,7 @@ api.interceptors.response.use(
     const request = error.config;
     const noRefresh = [
       "/auth/login/",
+      "/auth/admin/login/",
       "/auth/register/",
       "/auth/google/",
       "/auth/verify-email/",
