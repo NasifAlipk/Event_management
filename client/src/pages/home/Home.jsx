@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { CalendarDays, Compass, Plus, Users } from "lucide-react";
+import { ArrowRight, CalendarDays, Compass, Plus, Users } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import Header from "../../components/home/Header";
@@ -34,7 +34,8 @@ export default function Home() {
               <Link to="/profile" className="rounded-full border border-white/20 px-6 py-3 font-semibold text-white transition hover:bg-white/10">View profile</Link>
             </div>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-sm">
+          <div className="relative rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-sm">
+            <Link to="/apply-organizer" className="absolute right-6 top-6 inline-flex items-center gap-2 rounded-full border border-[#00ff85]/40 bg-[#00ff85]/10 px-4 py-2 text-sm font-semibold text-[#00ff85] transition hover:bg-[#00ff85] hover:text-black"><span className="hidden sm:inline">Host With Us Now</span><ArrowRight size={16} /></Link>
             <div className="mb-8 flex items-center justify-between"><span className="text-sm text-gray-400">Your Eventora space</span><span className="h-3 w-3 rounded-full bg-[#00ff85] shadow-[0_0_16px_#00ff85]" /></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-2xl bg-black/20 p-5"><p className="text-3xl font-semibold text-[#00ff85]">0</p><p className="mt-1 text-sm text-gray-400">Upcoming events</p></div>

@@ -141,7 +141,8 @@ export default function GlobalProfile() {
             {error && <p className="mt-3 text-sm text-red-300">{error}</p>}
             <div className="mt-6 flex flex-wrap gap-5 text-sm text-gray-400">
               <span className="inline-flex items-center gap-2">
-                <CalendarDays size={16} /> Eventora member
+                <CalendarDays size={16} />
+                {user?.role === "ORGANIZER" ? "Eventora Organizer" : "Eventora member"}
               </span>
               <span className="inline-flex items-center gap-2">
                 <MapPin size={16} /> Ready to explore

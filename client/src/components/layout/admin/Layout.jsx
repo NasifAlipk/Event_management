@@ -13,6 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { useAuth } from "../../../hooks/useAuth";
+import Header from "./Header";
 
 export default function Layout({ children }) {
   const { logout, user } = useAuth();
@@ -36,7 +37,7 @@ export default function Layout({ children }) {
           {item("/admin", "Dashboard", LayoutDashboard)}
           {[
             ["Customers", Users, "/admin/customers"],
-            ["Applications", ClipboardList],
+            ["Applications", ClipboardList, "/admin/applications"],
             ["Events", CalendarDays],
             ["Tickets", Ticket],
             ["Coupons", BadgeDollarSign],
@@ -75,7 +76,10 @@ export default function Layout({ children }) {
           <LogOut size={18} /> Logout
         </button>
       </aside>
-      <main className="min-w-0 flex-1">{children}</main>
+      <main className="min-w-0 flex-1">
+        <Header />
+        {children}
+      </main>
     </div>
   );
 }
