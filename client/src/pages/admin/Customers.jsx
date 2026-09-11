@@ -27,7 +27,7 @@ export default function Customers() {
             <table className="w-full min-w-[700px] text-left text-sm">
               <thead className="border-b border-white/10 text-gray-400">
                 <tr>
-                  {["Username", "Email", "Registered"].map(
+                  {["Username", "Email", "Registered,Date & Time","Role"].map(
                     (heading) => (
                       <th key={heading} className="px-3 py-3">
                         {heading}
@@ -50,7 +50,11 @@ export default function Customers() {
                         ? new Date(customer.date_joined).toLocaleString()
                         : "—"}
                     </td>
-                    
+                      <td className="px-3 py-3">
+                        <span className="rounded-full bg-[#00ff85]/15 px-2 py-1 text-xs text-[#00ff85]">
+                          {customer.role} 
+                        </span> 
+                    </td>
                   </tr>
                 ))}
               </tbody>
