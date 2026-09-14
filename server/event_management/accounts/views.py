@@ -13,7 +13,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.conf import settings
-from django.core.mail import EmailMultiAlternatives, send_mail
+from django.core.mail import send_mail
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -25,7 +25,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import EmailVerificationCode, User
+from .models import EmailVerificationCode, PendingRegistration, User
 from .permissions import IsAdministrator
 from .serializers import (
     LoginSerializer,
@@ -53,32 +53,18 @@ def send_verification_code(user):
         code_hash=make_password(code),
         expires_at=timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES),
     )
+    _send_otp_email(user.email, user.first_name or user.username, code)
+
+
+def _send_otp_email(email, name, code):
     subject = 'Your Eventora verification code'
     text_content = (
-        f'Hello {user.first_name or user.username},\n\n'
+        f'Hello {name},\n\n'
         f'Your Eventora verification code is {code}. It expires in '
         f'{OTP_EXPIRY_MINUTES} minutes.\n\n'
         'If you did not create this account, you can safely ignore this email.'
     )
-    html_content = f'''<!doctype html>
-<html><body style="margin:0;background:#101022;font-family:Arial,sans-serif;color:#e8e8f0;padding:32px 16px">
-  <div style="max-width:520px;margin:auto;background:#191832;border:1px solid #302d55;border-radius:18px;overflow:hidden">
-    <div style="padding:26px 32px;background:linear-gradient(135deg,#211c50,#123a37)">
-      <div style="font-size:24px;font-weight:700;color:#00ff85">Eventora</div>
-      <div style="margin-top:7px;color:#b9b7cb;font-size:13px">Events worth remembering.</div>
-    </div>
-    <div style="padding:32px">
-      <h1 style="margin:0 0 12px;font-size:24px;color:#fff">Verify your email address</h1>
-      <p style="margin:0;color:#b9b7cb;line-height:1.6">Hello {user.first_name or user.username}, use the verification code below to finish creating your Eventora account.</p>
-      <div style="margin:28px 0;text-align:center;background:#101022;border:1px solid #00ff85;border-radius:12px;padding:18px;font-size:34px;letter-spacing:9px;font-weight:700;color:#00ff85">{code}</div>
-      <p style="margin:0;color:#8f8da5;font-size:13px;line-height:1.6">This code expires in {OTP_EXPIRY_MINUTES} minutes. Never share this code with anyone.</p>
-    </div>
-    <div style="padding:18px 32px;border-top:1px solid #302d55;color:#77758d;font-size:12px">If you did not request this email, no action is required.</div>
-  </div>
-</body></html>'''
-    message = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [user.email])
-    message.attach_alternative(html_content, 'text/html')
-    message.send(fail_silently=False)
+    send_mail(subject, text_content, settings.DEFAULT_FROM_EMAIL, [email], fail_silently=False)
 
 
 def set_auth_cookies(response, access, refresh=None):
@@ -113,10 +99,19 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        send_verification_code(user)
+        data = serializer.validated_data
+        PendingRegistration.objects.filter(email=data['email']).delete()
+        PendingRegistration.objects.filter(username=data['username']).delete()
+        code = f'{secrets.randbelow(1_000_000):06d}'
+        pending = PendingRegistration.objects.create(
+            username=data['username'], email=data['email'],
+            first_name=data.get('first_name', ''), last_name=data.get('last_name', ''),
+            password_hash=make_password(data['password']), code_hash=make_password(code),
+            expires_at=timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES),
+        )
+        _send_otp_email(pending.email, pending.first_name or pending.username, code)
         return Response(
-            {'detail': 'Verification code sent to your email.', 'email': user.email},
+            {'detail': 'Verification code sent to your email.', 'email': pending.email},
             status=status.HTTP_201_CREATED,
         )
 
@@ -129,7 +124,27 @@ class VerifyEmailView(APIView):
         serializer = VerifyEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
-        user = get_object_or_404(User, email__iexact=email)
+        pending = PendingRegistration.objects.filter(email__iexact=email).first()
+        if pending:
+            if pending.expires_at <= timezone.now():
+                return Response({'detail': 'This code has expired. Request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+            if pending.attempts >= MAX_OTP_ATTEMPTS:
+                return Response({'detail': 'Too many attempts. Request a new code.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not check_password(serializer.validated_data['code'], pending.code_hash):
+                pending.attempts += 1
+                pending.save(update_fields=['attempts'])
+                return Response({'detail': 'The verification code is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+            user = User(username=pending.username, email=pending.email, first_name=pending.first_name, last_name=pending.last_name, is_active=True)
+            user.password = pending.password_hash
+            user.save()
+            pending.delete()
+            refresh = RefreshToken.for_user(user)
+            refresh['role'] = user.role
+            response = Response({'user': UserSerializer(user).data})
+            set_auth_cookies(response, refresh.access_token, refresh)
+            return response
+        else:
+            user = get_object_or_404(User, email__iexact=email)
 
         if user.is_active:
             return Response({'detail': 'This email is already verified.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -161,7 +176,17 @@ class ResendVerificationCodeView(APIView):
     def post(self, request):
         serializer = ResendVerificationCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = get_object_or_404(User, email__iexact=serializer.validated_data['email'])
+        email = serializer.validated_data['email']
+        pending = PendingRegistration.objects.filter(email__iexact=email).first()
+        if pending:
+            code = f'{secrets.randbelow(1_000_000):06d}'
+            pending.code_hash = make_password(code)
+            pending.attempts = 0
+            pending.expires_at = timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+            pending.save(update_fields=['code_hash', 'attempts', 'expires_at'])
+            _send_otp_email(pending.email, pending.first_name or pending.username, code)
+            return Response({'detail': 'A new verification code has been sent.'})
+        user = get_object_or_404(User, email__iexact=email)
 
         if user.is_active:
             return Response({'detail': 'This email is already verified.'}, status=status.HTTP_400_BAD_REQUEST)

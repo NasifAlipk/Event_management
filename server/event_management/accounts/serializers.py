@@ -20,6 +20,8 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
     def validate_username(self, value):
         value = value.strip()
+        if self.instance and value == self.instance.username:
+            return value
         if len(value) < 3:
             raise serializers.ValidationError('Username must be at least 3 characters long.')
         if User.objects.filter(username__iexact=value).exclude(pk=self.instance.pk).exists():

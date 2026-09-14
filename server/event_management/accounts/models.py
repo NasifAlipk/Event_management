@@ -33,3 +33,15 @@ class EmailVerificationCode(models.Model):
 
     class Meta:
         ordering = ('-created_at',)
+
+
+class PendingRegistration(models.Model):
+    username = models.CharField(max_length=150, unique=True)
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    password_hash = models.CharField(max_length=128)
+    code_hash = models.CharField(max_length=128)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
