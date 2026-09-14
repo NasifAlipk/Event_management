@@ -17,6 +17,12 @@ export default function GlobalProfile() {
   const [preview, setPreview] = useState(user?.profile_picture || "");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const apiError = (errorResponse, fallback) => {
+    const data = errorResponse?.response?.data;
+    if (data?.detail) return data.detail;
+    if (data && typeof data === "object") return Object.values(data).flat().join(" ");
+    return fallback;
+  };
   const selectImage = (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -38,7 +44,7 @@ export default function GlobalProfile() {
       setMessage("Profile updated successfully.");
       setEditing(false);
     } catch (err) {
-      setError(err.response?.data?.detail || "Unable to update profile.");
+      setError(apiError(err, "Unable to update profile."));
     }
   };
   const name =

@@ -13,6 +13,39 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'role')
 
 
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'profile_picture')
+
+    def validate_username(self, value):
+        value = value.strip()
+        if len(value) < 3:
+            raise serializers.ValidationError('Username must be at least 3 characters long.')
+        if User.objects.filter(username__iexact=value).exclude(pk=self.instance.pk).exists():
+            raise serializers.ValidationError('That username is already in use.')
+        return value
+
+    def validate_first_name(self, value):
+        value = value.strip()
+        if value and not value.replace(' ', '').isalpha():
+            raise serializers.ValidationError('First name can contain letters and spaces only.')
+        return value
+
+    def validate_last_name(self, value):
+        value = value.strip()
+        if value and not value.replace(' ', '').isalpha():
+            raise serializers.ValidationError('Last name can contain letters and spaces only.')
+        return value
+
+    def validate_profile_picture(self, value):
+        if value and len(value) > 3_000_000:
+            raise serializers.ValidationError('Profile picture is too large. Please choose a smaller image.')
+        if value and not value.startswith(('data:image/', 'https://', 'http://')):
+            raise serializers.ValidationError('Please provide a valid profile image.')
+        return value
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)

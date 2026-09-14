@@ -5,6 +5,9 @@ export const organizerApi = {
   applications: () => api.get("/organizer/applications/"),
   adminApplications: () => api.get("/organizer/admin/applications/"),
   adminApplication: (id) => api.get(`/organizer/admin/applications/${id}/`),
-  reviewApplication: (id, status) =>
-    api.patch(`/organizer/admin/applications/${id}/`, { status }),
+  reviewApplication: (id, status, rejection_reason = "") =>
+    api.patch(`/organizer/admin/applications/${id}/`, {
+      status,
+      rejection_reason,
+    }),
 };

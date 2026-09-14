@@ -25,10 +25,16 @@ export default function ApplicationReview() {
   }, [applicationId]);
 
   const review = async (status) => {
+    if (status === "APPROVED" && !window.confirm("Approve this organizer application? The user will become an Eventora Organizer.")) return;
+    let rejectionReason = "";
+    if (status === "REJECTED") {
+      rejectionReason = window.prompt("Please enter the reason for rejecting this application:", "")?.trim() || "";
+      if (!rejectionReason) return;
+    }
     setSaving(true);
     setError("");
     try {
-      const { data } = await organizerApi.reviewApplication(applicationId, status);
+      const { data } = await organizerApi.reviewApplication(applicationId, status, rejectionReason);
       setApplication(data.application);
     } catch (reviewError) {
       setError(reviewError.response?.data?.detail || "Unable to update application status.");
@@ -49,7 +55,7 @@ export default function ApplicationReview() {
           <div className="mt-8 grid gap-5 lg:grid-cols-2">
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="flex items-center gap-2 font-semibold"><UserRound size={18} className="text-[#00ff85]" /> Applicant information</h2><div className="mt-6 grid gap-5 sm:grid-cols-2"><Detail label="Full name" value={application.full_name} /><Detail label="Phone number" value={application.phone_number} /><Detail label="Organizer type" value={application.organizer_type} /><Detail label="Business name" value={application.organization_name} /><Detail label="Email" value={application.applicant_email} /><Detail label="Address" value={`${application.address}, ${application.city}, ${application.state}, ${application.country}`} /></div><div className="mt-5"><Detail label="Short description" value={application.short_description} /></div></section>
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="flex items-center gap-2 font-semibold"><FileCheck2 size={18} className="text-[#00ff85]" /> Identity verification</h2><div className="mt-6 grid gap-5 sm:grid-cols-2"><Detail label="Document type" value={application.identity_document_type} /><Detail label="Document name / number" value={application.identity_document_name} /></div>{document && <div className="mt-6">{application.identity_document_image?.match(/\.(jpg|jpeg|png|webp)$/i) ? <img src={document} alt="Identity document" className="max-h-56 rounded-xl border border-white/10 object-contain" /> : null}<a href={document} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[#00ff85]/30 px-4 py-2 text-sm text-[#00ff85] hover:bg-[#00ff85]/10">View full document <ExternalLink size={15} /></a></div>}</section>
-            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-semibold">Agreement</h2><p className="mt-5 flex items-center gap-2 text-sm text-emerald-300"><CheckCircle2 size={17} /> User accepted all required terms.</p></section>
+            <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-semibold">Agreement</h2><p className="mt-5 flex items-center gap-2 text-sm text-emerald-300"><CheckCircle2 size={17} /> User accepted all required terms.</p>{application.rejection_reason && <p className="mt-4 rounded-lg bg-red-400/10 p-3 text-sm text-red-300"><strong>Rejection reason:</strong> {application.rejection_reason}</p>}</section>
             <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-6"><h2 className="font-semibold">Admin action</h2><p className="mt-2 text-sm text-slate-400">Approving this application promotes the user to an Eventora Organizer.</p><div className="mt-6 flex flex-wrap gap-3"><button type="button" disabled={saving || application.status === "REJECTED"} onClick={() => review("REJECTED")} className="inline-flex items-center gap-2 rounded-lg border border-red-400/60 px-5 py-2.5 text-sm font-semibold text-red-300 hover:bg-red-400/10 disabled:opacity-40"><XCircle size={17} /> Reject</button><button type="button" disabled={saving || application.status === "APPROVED"} onClick={() => review("APPROVED")} className="inline-flex items-center gap-2 rounded-lg bg-[#00ff85] px-5 py-2.5 text-sm font-semibold text-black hover:bg-[#00d970] disabled:opacity-40"><CheckCircle2 size={17} /> Approve organizer</button></div>{error && <p className="mt-4 text-sm text-red-300">{error}</p>}</section>
           </div>
         </div>

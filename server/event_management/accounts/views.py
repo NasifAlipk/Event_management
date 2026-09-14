@@ -13,7 +13,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.middleware.csrf import get_token
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -34,6 +34,7 @@ from .serializers import (
     ResendVerificationCodeSerializer,
     RoleUpdateSerializer,
     UserSerializer,
+    ProfileUpdateSerializer,
     VerifyEmailSerializer,
 )
 
@@ -52,16 +53,32 @@ def send_verification_code(user):
         code_hash=make_password(code),
         expires_at=timezone.now() + timedelta(minutes=OTP_EXPIRY_MINUTES),
     )
-    send_mail(
-        subject='Verify your Eventora email',
-        message=(
-            f'Your Eventora verification code is {code}. '
-            f'It expires in {OTP_EXPIRY_MINUTES} minutes.'
-        ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
+    subject = 'Your Eventora verification code'
+    text_content = (
+        f'Hello {user.first_name or user.username},\n\n'
+        f'Your Eventora verification code is {code}. It expires in '
+        f'{OTP_EXPIRY_MINUTES} minutes.\n\n'
+        'If you did not create this account, you can safely ignore this email.'
     )
+    html_content = f'''<!doctype html>
+<html><body style="margin:0;background:#101022;font-family:Arial,sans-serif;color:#e8e8f0;padding:32px 16px">
+  <div style="max-width:520px;margin:auto;background:#191832;border:1px solid #302d55;border-radius:18px;overflow:hidden">
+    <div style="padding:26px 32px;background:linear-gradient(135deg,#211c50,#123a37)">
+      <div style="font-size:24px;font-weight:700;color:#00ff85">Eventora</div>
+      <div style="margin-top:7px;color:#b9b7cb;font-size:13px">Events worth remembering.</div>
+    </div>
+    <div style="padding:32px">
+      <h1 style="margin:0 0 12px;font-size:24px;color:#fff">Verify your email address</h1>
+      <p style="margin:0;color:#b9b7cb;line-height:1.6">Hello {user.first_name or user.username}, use the verification code below to finish creating your Eventora account.</p>
+      <div style="margin:28px 0;text-align:center;background:#101022;border:1px solid #00ff85;border-radius:12px;padding:18px;font-size:34px;letter-spacing:9px;font-weight:700;color:#00ff85">{code}</div>
+      <p style="margin:0;color:#8f8da5;font-size:13px;line-height:1.6">This code expires in {OTP_EXPIRY_MINUTES} minutes. Never share this code with anyone.</p>
+    </div>
+    <div style="padding:18px 32px;border-top:1px solid #302d55;color:#77758d;font-size:12px">If you did not request this email, no action is required.</div>
+  </div>
+</body></html>'''
+    message = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [user.email])
+    message.attach_alternative(html_content, 'text/html')
+    message.send(fail_silently=False)
 
 
 def set_auth_cookies(response, access, refresh=None):
@@ -265,12 +282,10 @@ class MeView(APIView):
 
 class ProfileView(APIView):
     def patch(self, request):
-        user = request.user
-        for field in ('username', 'first_name', 'last_name', 'profile_picture'):
-            if field in request.data:
-                setattr(user, field, request.data[field])
-        user.save()
-        return Response({'user': UserSerializer(user).data})
+        serializer = ProfileUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({'user': UserSerializer(serializer.instance).data})
 
 
 class UserRoleView(APIView):

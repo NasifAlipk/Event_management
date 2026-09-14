@@ -25,6 +25,7 @@ class OrganizerApplicationSerializer(serializers.ModelSerializer):
             "information_accurate",
             "terms_accepted",
             "status",
+            "rejection_reason",
             "created_at",
             "applicant_email",
             "applicant_username",
@@ -56,7 +57,7 @@ class OrganizerApplicationSerializer(serializers.ModelSerializer):
 class OrganizerApplicationReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganizerApplication
-        fields = ("status",)
+        fields = ("status", "rejection_reason")
 
     def validate_status(self, value):
         if value not in {
@@ -66,3 +67,13 @@ class OrganizerApplicationReviewSerializer(serializers.ModelSerializer):
         }:
             raise serializers.ValidationError("Invalid application status.")
         return value
+
+    def validate(self, attrs):
+        status_value = attrs.get("status", self.instance.status)
+        reason = (attrs.get("rejection_reason", self.instance.rejection_reason) or "").strip()
+        if status_value == OrganizerApplication.Status.REJECTED and not reason:
+            raise serializers.ValidationError(
+                {"rejection_reason": "Please provide a reason for rejecting this application."}
+            )
+        attrs["rejection_reason"] = reason if status_value == OrganizerApplication.Status.REJECTED else ""
+        return attrs

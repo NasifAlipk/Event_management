@@ -32,6 +32,7 @@ class OrganizerApplication(models.Model):
     information_accurate = models.BooleanField(default=False)
     terms_accepted = models.BooleanField(default=False)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    rejection_reason = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

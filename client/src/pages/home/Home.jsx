@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, CalendarDays, Compass, Plus, Users } from "lucide-react";
 
 import { useAuth } from "../../hooks/useAuth";
 import Header from "../../components/home/Header";
 import SubscriptionPlan from "../../components/home/SubscriptionPlan";
+import { organizerApi } from "../../services/organizer";
 
 const features = [
   { icon: CalendarDays, title: "Your events", text: "Keep your registrations and upcoming experiences in one place." },
@@ -13,7 +15,23 @@ const features = [
 
 export default function Home() {
   const { user } = useAuth();
+  const [application, setApplication] = useState(null);
+  const [applicationLoading, setApplicationLoading] = useState(true);
   const displayName = user?.first_name || user?.username || "there";
+
+  useEffect(() => {
+    organizerApi
+      .applications()
+      .then(({ data }) => setApplication(data.applications?.[0] || null))
+      .catch(() => setApplication(null))
+      .finally(() => setApplicationLoading(false));
+  }, []);
+
+  const statusText = {
+    PENDING: "Pending review",
+    APPROVED: "Approved organizer",
+    REJECTED: "Application rejected",
+  };
 
   return (
     <><Header />
@@ -35,8 +53,9 @@ export default function Home() {
             </div>
           </div>
           <div className="relative rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-sm">
-            <Link to="/apply-organizer" className="absolute right-6 top-6 inline-flex items-center gap-2 rounded-full border border-[#00ff85]/40 bg-[#00ff85]/10 px-4 py-2 text-sm font-semibold text-[#00ff85] transition hover:bg-[#00ff85] hover:text-black"><span className="hidden sm:inline">Host With Us Now</span><ArrowRight size={16} /></Link>
+            {!applicationLoading && (!application || application.status === "REJECTED") && <Link to="/apply-organizer" className="absolute right-6 top-6 inline-flex items-center gap-2 rounded-full border border-[#00ff85]/40 bg-[#00ff85]/10 px-4 py-2 text-sm font-semibold text-[#00ff85] transition hover:bg-[#00ff85] hover:text-black"><span className="hidden sm:inline">{application?.status === "REJECTED" ? "Apply Again" : "Host With Us Now"}</span><ArrowRight size={16} /></Link>}
             <div className="mb-8 flex items-center justify-between"><span className="text-sm text-gray-400">Your Eventora space</span><span className="h-3 w-3 rounded-full bg-[#00ff85] shadow-[0_0_16px_#00ff85]" /></div>
+            {application && <div className={`mb-5 rounded-xl border p-4 ${application.status === "APPROVED" ? "border-emerald-400/30 bg-emerald-400/10" : application.status === "REJECTED" ? "border-red-400/30 bg-red-400/10" : "border-amber-400/30 bg-amber-400/10"}`}><p className="text-xs uppercase tracking-wider text-gray-400">Organizer application</p><p className={`mt-1 font-semibold ${application.status === "APPROVED" ? "text-emerald-300" : application.status === "REJECTED" ? "text-red-300" : "text-amber-300"}`}>{statusText[application.status]}</p>{application.status === "APPROVED" && <p className="mt-1 text-sm text-gray-300">You can now create and host events on Eventora.</p>}{application.status === "PENDING" && <p className="mt-1 text-sm text-gray-300">Your application is waiting for an admin review.</p>}{application.status === "REJECTED" && <p className="mt-1 text-sm text-gray-300">{application.rejection_reason || "Please review your details and apply again."}</p>}</div>}
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-2xl bg-black/20 p-5"><p className="text-3xl font-semibold text-[#00ff85]">0</p><p className="mt-1 text-sm text-gray-400">Upcoming events</p></div>
               <div className="rounded-2xl bg-black/20 p-5"><p className="text-3xl font-semibold text-[#00ff85]">0</p><p className="mt-1 text-sm text-gray-400">Connections</p></div>
