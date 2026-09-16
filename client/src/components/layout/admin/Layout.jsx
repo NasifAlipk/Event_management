@@ -38,7 +38,7 @@ export default function Layout({ children }) {
           {[
             ["Customers", Users, "/admin/customers"],
             ["Applications", ClipboardList, "/admin/applications"],
-            ["Events", CalendarDays],
+            ["Events", CalendarDays, "/admin/events"],
             ["Tickets", Ticket],
             ["Coupons", BadgeDollarSign],
             ["Achievements", BarChart3],

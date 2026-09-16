@@ -21,7 +21,9 @@ import AdminForgotPassword from "./pages/admin/ForgotPassword.jsx";
 import AdminResetPassword from "./pages/admin/ResetPassword.jsx";
 import AdminApplicationsPage from "./pages/admin/Applications.jsx";
 import AdminApplicationReviewPage from "./pages/admin/ApplicationReview.jsx";
+import AdminEventsPage from "./pages/admin/Events.jsx";
 import Explore from "./pages/Explore/Explore.jsx";
+import AddEvent from "./pages/Event/AddEvent.jsx";
 
 function App() {
   return (
@@ -48,11 +50,13 @@ function App() {
         <Route path="/admin/customers" element={<AdminCustomersPage />} />
         <Route path="/admin/applications" element={<AdminApplicationsPage />} />
         <Route path="/admin/applications/:applicationId" element={<AdminApplicationReviewPage />} />
+        <Route path="/admin/events" element={<AdminEventsPage />} />
       </Route>
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Home />} />
           <Route path="/events" element={<Explore />} />
+          <Route path="/events/add" element={<AddEvent />} />
           <Route path="/profile" element={<GlobalProfile />} />
           <Route path="/apply-organizer" element={<OrganizerApplication />} />
         </Route>

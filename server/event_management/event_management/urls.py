@@ -9,6 +9,7 @@ urlpatterns = [
     path('api/auth/', include('accounts.urls')),
     path('api/admin/', include('Admin.urls')),
     path('api/organizer/', include('organizer.urls')),
+    path('api/events/', include('event.urls')),
 ]
 
 if settings.DEBUG:
