@@ -21,6 +21,7 @@ import AdminForgotPassword from "./pages/admin/ForgotPassword.jsx";
 import AdminResetPassword from "./pages/admin/ResetPassword.jsx";
 import AdminApplicationsPage from "./pages/admin/Applications.jsx";
 import AdminApplicationReviewPage from "./pages/admin/ApplicationReview.jsx";
+import Explore from "./pages/Explore/Explore.jsx";
 
 function App() {
   return (
@@ -51,7 +52,7 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Home />} />
-          <Route path="/events" element={<Home />} />
+          <Route path="/events" element={<Explore />} />
           <Route path="/profile" element={<GlobalProfile />} />
           <Route path="/apply-organizer" element={<OrganizerApplication />} />
         </Route>
