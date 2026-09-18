@@ -163,9 +163,10 @@ export default function Explore() {
             ) : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {visibleEvents.map((event) => (
-                  <article
+                  <Link
+                    to={`/events/${event.id}`}
                     key={event.id}
-                    className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]"
+                    className="block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] transition hover:-translate-y-1 hover:border-[#00ff85]/50"
                   >
                     <img
                       src={event.main_banner}
@@ -190,7 +191,7 @@ export default function Explore() {
                         {event.city}, {event.country}
                       </p>
                     </div>
-                  </article>
+                  </Link>
                 ))}
               </div>
             )}

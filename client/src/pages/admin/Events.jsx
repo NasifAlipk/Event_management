@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import Layout from "../../components/layout/admin/Layout";
 import ConfirmModal from "../../components/ui/ConfirmModal";
@@ -209,6 +210,7 @@ export default function Events() {
                   </div>
 
                   <div className="mt-5 flex justify-end gap-2">
+                    <Link to={`/admin/events/${event.id}`} className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-300 hover:bg-white/10">Details</Link>
                     {event.status === "PENDING" && (
                       <>
                         <button

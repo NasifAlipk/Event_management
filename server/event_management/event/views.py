@@ -16,6 +16,17 @@ class PublishedEventsView(APIView):
         return Response({"events": EventSerializer(events, many=True, context={"request": request}).data})
 
 
+class PublishedEventDetailView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, event_id):
+        try:
+            event = Event.objects.get(pk=event_id, status=Event.Status.APPROVED, visibility=Event.Visibility.PUBLIC)
+        except Event.DoesNotExist:
+            return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"event": EventSerializer(event, context={"request": request}).data})
+
+
 class OrganizerEventsView(APIView):
     permission_classes = (IsAuthenticated,)
 
@@ -42,6 +53,13 @@ class AdminEventsView(APIView):
 
 class AdminEventReviewView(APIView):
     permission_classes = (IsAuthenticated, IsAdministrator)
+
+    def get(self, request, event_id):
+        try:
+            event = Event.objects.select_related("organizer").get(pk=event_id)
+        except Event.DoesNotExist:
+            return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"event": EventSerializer(event, context={"request": request}).data})
 
     def patch(self, request, event_id):
         try:

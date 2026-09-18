@@ -3,6 +3,7 @@ import { ArrowLeft, CalendarPlus, ImagePlus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
 import ExploreLayout from "../../components/layout/Explore/Layout";
+import ConfirmModal from "../../components/ui/ConfirmModal";
 import { eventsApi } from "../../services/events";
 
 const initial = {
@@ -41,6 +42,7 @@ function Input({
   setForm,
   type = "text",
   required = true,
+  min,
 }) {
   return (
     <label className="text-sm text-slate-300">
@@ -51,6 +53,7 @@ function Input({
         name={name}
         type={type}
         required={required}
+        min={min}
         value={form[name]}
         onChange={(event) =>
           setForm((current) => ({
@@ -106,6 +109,7 @@ export default function AddEvent() {
   const [form, setForm] = useState(initial);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmPublish, setConfirmPublish] = useState(false);
 
   const update = (event) =>
     setForm((current) => ({
@@ -116,9 +120,32 @@ export default function AddEvent() {
           : event.target.value,
     }));
 
-  const submit = async (event) => {
+  const validateForm = () => {
+    const start = new Date(`${form.start_date}T${form.start_time}`);
+    const end = new Date(`${form.end_date}T${form.end_time}`);
+    const totalTickets = ["regular_quantity", "vip_quantity", "premium_quantity"].reduce((sum, key) => sum + Number(form[key] || 0), 0);
+    if (form.title.trim().length < 3) return "Event title must be at least 3 characters.";
+    if (form.description.trim().length < 20) return "Description must be at least 20 characters.";
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "Please provide a valid event schedule.";
+    if (start <= new Date()) return "The event start date and time must be in the future.";
+    if (end <= start) return "The end date and time must be after the start date and time.";
+    if (Number(form.max_participants) < 1) return "Maximum participants must be at least 1.";
+    if (totalTickets < 1) return "Add at least one available ticket.";
+    if (totalTickets > Number(form.max_participants)) return "Total ticket quantities cannot exceed maximum participants.";
+    if (["regular_price", "vip_price", "premium_price", "regular_quantity", "vip_quantity", "premium_quantity"].some((key) => Number(form[key] || 0) <= 0)) return "Every ticket price and quantity must be greater than 0.";
+    return "";
+  };
+
+  const submit = (event) => {
     event.preventDefault();
     setError("");
+    const validationError = validateForm();
+    if (validationError) { setError(validationError); return; }
+    setConfirmPublish(true);
+  };
+
+  const publish = async () => {
+    setConfirmPublish(false);
     setSaving(true);
 
     const data = new FormData();
@@ -239,6 +266,7 @@ export default function AddEvent() {
                   label="Start date"
                   name="start_date"
                   type="date"
+                  min={new Date().toISOString().slice(0, 10)}
                   form={form}
                   setForm={setForm}
                 />
@@ -255,6 +283,7 @@ export default function AddEvent() {
                   label="End date"
                   name="end_date"
                   type="date"
+                  min={form.start_date || new Date().toISOString().slice(0, 10)}
                   form={form}
                   setForm={setForm}
                 />
@@ -362,6 +391,7 @@ export default function AddEvent() {
                   label="Maximum participants"
                   name="max_participants"
                   type="number"
+                  min={1}
                   form={form}
                   setForm={setForm}
                 />
@@ -376,6 +406,7 @@ export default function AddEvent() {
                   label="Regular price"
                   name="regular_price"
                   type="number"
+                  min={1}
                   required={false}
                   form={form}
                   setForm={setForm}
@@ -385,6 +416,7 @@ export default function AddEvent() {
                   label="Regular quantity"
                   name="regular_quantity"
                   type="number"
+                  min={1}
                   required={false}
                   form={form}
                   setForm={setForm}
@@ -394,6 +426,7 @@ export default function AddEvent() {
                   label="VIP price"
                   name="vip_price"
                   type="number"
+                  min={1}
                   required={false}
                   form={form}
                   setForm={setForm}
@@ -403,6 +436,7 @@ export default function AddEvent() {
                   label="VIP quantity"
                   name="vip_quantity"
                   type="number"
+                  min={1}
                   required={false}
                   form={form}
                   setForm={setForm}
@@ -412,6 +446,7 @@ export default function AddEvent() {
                   label="Premium price"
                   name="premium_price"
                   type="number"
+                  min={1}
                   required={false}
                   form={form}
                   setForm={setForm}
@@ -421,6 +456,7 @@ export default function AddEvent() {
                   label="Premium quantity"
                   name="premium_quantity"
                   type="number"
+                  min={1}
                   required={false}
                   form={form}
                   setForm={setForm}
@@ -477,6 +513,7 @@ export default function AddEvent() {
           </form>
         </div>
       </main>
+      {confirmPublish && <ConfirmModal type="approve" confirmLabel="Publish event" title="Publish Event?" message="Are you sure you want to publish this event? It will be sent to the admin team for approval before appearing in Explore." reason="" onReasonChange={() => {}} onCancel={() => setConfirmPublish(false)} onConfirm={publish} loading={saving} />}
     </ExploreLayout>
   );
 }
