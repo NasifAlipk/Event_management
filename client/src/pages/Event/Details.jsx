@@ -9,10 +9,12 @@ import {
 import { Link, useParams } from "react-router-dom";
 
 import ExploreLayout from "../../components/layout/Explore/Layout";
+import { useAuth } from "../../hooks/useAuth";
 import { eventsApi } from "../../services/events";
 
 export default function EventDetails() {
   const { eventId } = useParams();
+  const { user } = useAuth();
   const [event, setEvent] = useState(null);
   const [error, setError] = useState("");
 
@@ -45,7 +47,7 @@ export default function EventDetails() {
             Back to Events
           </Link>
 
-          <div className="mt-6 flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm uppercase tracking-[.22em] text-[#00ff85]">{event.category} · {event.event_type}</p><h1 className="mt-2 text-3xl font-semibold sm:text-4xl">{event.title}</h1></div><span className="rounded-full bg-[#00ff85]/10 px-3 py-1 text-xs text-[#00ff85]">Approved event</span></div>
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm uppercase tracking-[.22em] text-[#00ff85]">{event.category} · {event.event_type}</p><h1 className="mt-2 text-3xl font-semibold sm:text-4xl">{event.title}</h1></div>{Number(event.organizer) === Number(user?.id) && <span className="rounded-full bg-[#00ff85]/10 px-3 py-1 text-xs text-[#00ff85]">Approved event</span>}</div>
 
           <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
             <img
