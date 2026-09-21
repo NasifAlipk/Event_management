@@ -45,15 +45,13 @@ export default function EventDetails() {
             Back to Events
           </Link>
 
-          <h1 className="mt-6 text-3xl font-semibold sm:text-4xl">
-            {event.title}
-          </h1>
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-3"><div><p className="text-sm uppercase tracking-[.22em] text-[#00ff85]">{event.category} · {event.event_type}</p><h1 className="mt-2 text-3xl font-semibold sm:text-4xl">{event.title}</h1></div><span className="rounded-full bg-[#00ff85]/10 px-3 py-1 text-xs text-[#00ff85]">Approved event</span></div>
 
           <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
             <img
               src={event.main_banner}
               alt={event.title}
-              className="h-64 w-full object-cover sm:h-96"
+              className="max-h-[28rem] min-h-64 w-full bg-black object-contain sm:min-h-96"
             />
 
             <div className="grid gap-5 p-6 sm:grid-cols-2 lg:grid-cols-4">

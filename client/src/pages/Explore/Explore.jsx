@@ -11,8 +11,6 @@ import { useAuth } from "../../hooks/useAuth";
 import ExploreLayout from "../../components/layout/Explore/Layout";
 import { eventsApi } from "../../services/events";
 
-const filters = ["Category", "Type", "Date"];
-
 export default function Explore() {
   const { user } = useAuth();
   const location = useLocation();
@@ -20,6 +18,9 @@ export default function Explore() {
   const [query, setQuery] = useState("");
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState("");
+  const [type, setType] = useState("");
+  const [date, setDate] = useState("");
 
   const isOrganizer = user?.role === "ORGANIZER";
 
@@ -30,9 +31,10 @@ export default function Explore() {
       .finally(() => setLoading(false));
   }, []);
 
-  const visibleEvents = events.filter((event) =>
-    event.title.toLowerCase().includes(query.toLowerCase())
-  );
+  const categories = [...new Set(events.map((event) => event.category).filter(Boolean))];
+  const types = [...new Set(events.map((event) => event.event_type).filter(Boolean))];
+  const dates = [...new Set(events.map((event) => event.start_date).filter(Boolean))].sort();
+  const visibleEvents = events.filter((event) => event.title.toLowerCase().includes(query.toLowerCase()) && (!category || event.category === category) && (!type || event.event_type === type) && (!date || event.start_date === date));
 
   return (
     <ExploreLayout>
@@ -94,16 +96,7 @@ export default function Explore() {
               </button>
 
               <div className="flex flex-wrap gap-2">
-                {filters.map((label) => (
-                  <button
-                    key={label}
-                    type="button"
-                    className="inline-flex items-center justify-between gap-6 rounded-xl border border-white/10 bg-[#0d1418] px-4 py-3 text-sm text-slate-300 hover:border-[#00ff85]/40"
-                  >
-                    <span>{label}</span>
-                    <ChevronDown size={15} />
-                  </button>
-                ))}
+                {[["Category", category, setCategory, categories], ["Type", type, setType, types], ["Date", date, setDate, dates]].map(([label, value, setter, options]) => <label key={label} className="relative inline-flex items-center rounded-xl border border-white/10 bg-[#0d1418] text-sm text-slate-300 hover:border-[#00ff85]/40"><select value={value} onChange={(event) => setter(event.target.value)} className="appearance-none bg-transparent py-3 pl-4 pr-10 outline-none"><option value="">{label}</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3" size={15} /></label>)}
 
                 <button
                   type="button"
@@ -171,7 +164,7 @@ export default function Explore() {
                     <img
                       src={event.main_banner}
                       alt={event.title}
-                      className="h-52 w-full object-cover"
+                      className="h-52 w-full bg-black object-contain"
                     />
 
                     <div className="p-5">

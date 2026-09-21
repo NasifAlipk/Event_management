@@ -38,8 +38,8 @@ class EventSerializer(serializers.ModelSerializer):
         total_quantity = sum(attrs.get(field, 0) for field in quantity_fields)
         if total_quantity < 1:
             raise serializers.ValidationError({"regular_quantity": "At least one ticket must be available."})
-        if total_quantity > attrs["max_participants"]:
-            raise serializers.ValidationError({"max_participants": "Ticket quantities cannot exceed maximum participants."})
+        if total_quantity != attrs["max_participants"]:
+            raise serializers.ValidationError({"max_participants": "Maximum participants must exactly match the total ticket quantities."})
         if attrs.get("main_banner"):
             self._validate_file(attrs["main_banner"], "Main banner")
         if attrs.get("promotional_image"):

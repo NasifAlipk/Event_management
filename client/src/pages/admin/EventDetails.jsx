@@ -57,7 +57,7 @@ export default function EventDetails() {
               </h1>
 
               <p className="mt-2 text-slate-400">
-                Submitted by {event.organizer_name}
+                Organized by {event.organizer_name}
               </p>
             </div>
 
@@ -69,7 +69,7 @@ export default function EventDetails() {
           <img
             src={event.main_banner}
             alt={event.title}
-            className="mt-7 h-72 w-full rounded-2xl border border-white/10 object-cover"
+            className="mt-7 max-h-[28rem] min-h-72 w-full rounded-2xl border border-white/10 bg-black object-contain"
           />
 
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

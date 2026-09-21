@@ -131,7 +131,7 @@ export default function AddEvent() {
     if (end <= start) return "The end date and time must be after the start date and time.";
     if (Number(form.max_participants) < 1) return "Maximum participants must be at least 1.";
     if (totalTickets < 1) return "Add at least one available ticket.";
-    if (totalTickets > Number(form.max_participants)) return "Total ticket quantities cannot exceed maximum participants.";
+    if (totalTickets !== Number(form.max_participants)) return "Maximum participants must exactly match the total ticket quantities.";
     if (["regular_price", "vip_price", "premium_price", "regular_quantity", "vip_quantity", "premium_quantity"].some((key) => Number(form[key] || 0) <= 0)) return "Every ticket price and quantity must be greater than 0.";
     return "";
   };
