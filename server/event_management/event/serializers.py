@@ -15,30 +15,36 @@ class EventSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "organizer", "status", "rejection_reason", "created_at", "updated_at", "organizer_name")
 
     def validate(self, attrs):
-        start = datetime.combine(attrs["start_date"], attrs["start_time"])
-        end = datetime.combine(attrs["end_date"], attrs["end_time"])
+        # PATCH requests may omit fields. Validate the complete prospective
+        # event by merging submitted values with the existing instance.
+        values = {}
+        if self.instance is not None:
+            values = {field.name: getattr(self.instance, field.name) for field in Event._meta.fields}
+        values.update(attrs)
+        start = datetime.combine(values["start_date"], values["start_time"])
+        end = datetime.combine(values["end_date"], values["end_time"])
         now = timezone.localtime().replace(tzinfo=None)
         if start <= now:
             raise serializers.ValidationError({"start_date": "Event start must be in the future."})
         if end <= start:
             raise serializers.ValidationError({"end_date": "End date and time must be after the start date and time."})
         for field in ("title", "event_type", "category", "venue_name", "address", "city", "state", "country", "pin_code"):
-            if not str(attrs.get(field, "")).strip():
+            if not str(values.get(field, "")).strip():
                 raise serializers.ValidationError({field: "This field cannot be blank."})
-        if len(attrs.get("title", "").strip()) < 3:
+        if len(str(values.get("title", "")).strip()) < 3:
             raise serializers.ValidationError({"title": "Event title must be at least 3 characters."})
-        if len(attrs.get("description", "").strip()) < 20:
+        if len(str(values.get("description", "")).strip()) < 20:
             raise serializers.ValidationError({"description": "Description must be at least 20 characters."})
-        if attrs.get("max_participants", 0) < 1:
+        if values.get("max_participants", 0) < 1:
             raise serializers.ValidationError({"max_participants": "Maximum participants must be at least 1."})
         quantity_fields = ("regular_quantity", "vip_quantity", "premium_quantity")
         price_fields = ("regular_price", "vip_price", "premium_price")
-        if any(attrs.get(field, 0) <= 0 for field in (*quantity_fields, *price_fields)):
+        if any(values.get(field, 0) <= 0 for field in (*quantity_fields, *price_fields)):
             raise serializers.ValidationError({"regular_price": "Every ticket price and quantity must be greater than 0."})
-        total_quantity = sum(attrs.get(field, 0) for field in quantity_fields)
+        total_quantity = sum(values.get(field, 0) for field in quantity_fields)
         if total_quantity < 1:
             raise serializers.ValidationError({"regular_quantity": "At least one ticket must be available."})
-        if total_quantity != attrs["max_participants"]:
+        if total_quantity != values["max_participants"]:
             raise serializers.ValidationError({"max_participants": "Maximum participants must exactly match the total ticket quantities."})
         if attrs.get("main_banner"):
             self._validate_file(attrs["main_banner"], "Main banner")

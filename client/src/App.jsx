@@ -25,6 +25,7 @@ import AdminEventsPage from "./pages/admin/Events.jsx";
 import AdminEventDetailsPage from "./pages/admin/EventDetails.jsx";
 import Explore from "./pages/Explore/Explore.jsx";
 import AddEvent from "./pages/Event/AddEvent.jsx";
+import EditEvent from "./pages/Event/EditEvent.jsx";
 import EventDetails from "./pages/Event/Details.jsx";
 
 function App() {
@@ -60,6 +61,7 @@ function App() {
           <Route path="/dashboard" element={<Home />} />
           <Route path="/events" element={<Explore />} />
           <Route path="/events/add" element={<AddEvent />} />
+          <Route path="/events/edit/:eventId" element={<EditEvent />} />
           <Route path="/events/:eventId" element={<EventDetails />} />
           <Route path="/profile" element={<GlobalProfile />} />
           <Route path="/apply-organizer" element={<OrganizerApplication />} />

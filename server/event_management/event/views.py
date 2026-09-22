@@ -43,6 +43,43 @@ class OrganizerEventsView(APIView):
         return Response({"events": EventSerializer(events, many=True, context={"request": request}).data})
 
 
+class OrganizerEventDetailView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, request, event_id):
+        try:
+            return Event.objects.get(pk=event_id, organizer=request.user)
+        except Event.DoesNotExist:
+            return None
+
+    def get(self, request, event_id):
+        event = self.get_object(request, event_id)
+        if event is None:
+            return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"event": EventSerializer(event, context={"request": request}).data})
+
+    def patch(self, request, event_id):
+        event = self.get_object(request, event_id)
+        if event is None:
+            return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
+        if request.user.role != request.user.Role.ORGANIZER:
+            return Response({"detail": "Only organizers can edit events."}, status=status.HTTP_403_FORBIDDEN)
+        serializer = EventSerializer(event, data=request.data, partial=True, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        # Any edit returns the event to review so changed details are checked.
+        event = serializer.save(status=Event.Status.PENDING, rejection_reason="")
+        return Response({"event": EventSerializer(event, context={"request": request}).data})
+
+    def delete(self, request, event_id):
+        event = self.get_object(request, event_id)
+        if event is None:
+            return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
+        if request.user.role != request.user.Role.ORGANIZER:
+            return Response({"detail": "Only organizers can delete events."}, status=status.HTTP_403_FORBIDDEN)
+        event.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class AdminEventsView(APIView):
     permission_classes = (IsAuthenticated, IsAdministrator)
 
