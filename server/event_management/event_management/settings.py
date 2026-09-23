@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'Admin',
     'organizer',
     'event',
+    'coupon',
 ]
 
 MIDDLEWARE = [

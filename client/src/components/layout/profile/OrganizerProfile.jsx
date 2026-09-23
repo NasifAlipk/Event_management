@@ -1,11 +1,10 @@
 import {
-  BadgePlus,
   Ticket,
   LogOut,
   UserRound,
   Wallet,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../../hooks/useAuth";
 
@@ -25,7 +24,7 @@ export default function OrganizerProfileLayout() {
       </p>
 
       <nav className="mt-7 space-y-2">
-\        <a
+        <a
           href="#profile"
           className="flex items-center gap-2 rounded-lg bg-[#00ff85] px-4 py-2.5 font-semibold text-black"
         >
@@ -33,14 +32,13 @@ export default function OrganizerProfileLayout() {
           Profile
         </a>
 
-        <button
-          type="button"
-          disabled
+        <Link
+          to="/coupons"
           className="flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-left text-slate-500"
         >
           <Ticket size={16} />
           Coupon
-        </button>
+        </Link>
 
         <button
           type="button"

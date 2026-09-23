@@ -40,7 +40,7 @@ export default function Layout({ children }) {
             ["Applications", ClipboardList, "/admin/applications"],
             ["Events", CalendarDays, "/admin/events"],
             ["Tickets", Ticket],
-            ["Coupons", BadgeDollarSign],
+            ["Coupons", BadgeDollarSign, "/admin/coupons"],
             ["Achievements", BarChart3],
             ["Finance", Coins],
             ["Subscription", Settings],

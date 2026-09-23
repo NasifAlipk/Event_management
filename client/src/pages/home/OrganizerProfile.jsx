@@ -143,7 +143,7 @@ export default function OrganizerProfile() {
               <PlusCircle size={16} />
               Add event
             </Link>
-            <button type="button" disabled title="Coupon management is not available yet" className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-slate-500"><Ticket size={16} /> Add coupon</button>
+            <Link to="/coupons/add" className="inline-flex items-center gap-2 rounded-lg border border-[#00ff85]/40 px-3 py-2 text-sm font-semibold text-[#00ff85] hover:bg-[#00ff85]/10"><Ticket size={16} /> Add coupon</Link>
           </div>
 
           <div className="mt-5 space-y-3">

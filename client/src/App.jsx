@@ -27,6 +27,11 @@ import Explore from "./pages/Explore/Explore.jsx";
 import AddEvent from "./pages/Event/AddEvent.jsx";
 import EditEvent from "./pages/Event/EditEvent.jsx";
 import EventDetails from "./pages/Event/Details.jsx";
+import Coupon from "./pages/coupon/Coupon.jsx";
+import AddCoupon from "./pages/coupon/AddCoupon.jsx";
+import EditCoupon from "./pages/coupon/EditCoupon.jsx";
+import AdminCoupons from "./pages/admin/Coupons.jsx";
+import AdminCouponDetails from "./pages/admin/CouponDetails.jsx";
 
 function App() {
   return (
@@ -55,6 +60,8 @@ function App() {
         <Route path="/admin/applications/:applicationId" element={<AdminApplicationReviewPage />} />
         <Route path="/admin/events" element={<AdminEventsPage />} />
         <Route path="/admin/events/:eventId" element={<AdminEventDetailsPage />} />
+        <Route path="/admin/coupons" element={<AdminCoupons />} />
+        <Route path="/admin/coupons/:couponId" element={<AdminCouponDetails />} />
       </Route>
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
@@ -63,6 +70,9 @@ function App() {
           <Route path="/events/add" element={<AddEvent />} />
           <Route path="/events/edit/:eventId" element={<EditEvent />} />
           <Route path="/events/:eventId" element={<EventDetails />} />
+          <Route path="/coupons" element={<Coupon />} />
+          <Route path="/coupons/add" element={<AddCoupon />} />
+          <Route path="/coupons/edit/:couponId" element={<EditCoupon />} />
           <Route path="/profile" element={<GlobalProfile />} />
           <Route path="/apply-organizer" element={<OrganizerApplication />} />
         </Route>
