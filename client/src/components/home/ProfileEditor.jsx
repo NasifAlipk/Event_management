@@ -1,18 +1,288 @@
 import { CalendarDays, Mail, Pencil, UserRound } from "lucide-react";
 import { useState } from "react";
+
 import Header from "./Header";
 import { useAuth } from "../../hooks/useAuth";
 import { authApi } from "../../services/auth";
 
 export default function ProfileEditor({ stats, children }) {
   const { user, updateUser } = useAuth();
+
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ username: user?.username || "", first_name: user?.first_name || "", last_name: user?.last_name || "", profile_picture: user?.profile_picture || "" });
-  const [preview, setPreview] = useState(user?.profile_picture || "");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const save = async (event) => { event.preventDefault(); setError(""); setMessage(""); try { const { data } = await authApi.profile(form); updateUser(data.user); setMessage("Profile updated successfully."); setEditing(false); } catch (saveError) { const data = saveError.response?.data; setError(data?.detail || (data && typeof data === "object" ? Object.values(data).flat().join(" ") : "Unable to update profile.")); } };
-  const selectImage = (event) => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 2 * 1024 * 1024) return setError("Profile image must be smaller than 2 MB."); const reader = new FileReader(); reader.onload = () => { setPreview(reader.result); setForm((current) => ({ ...current, profile_picture: reader.result })); }; reader.readAsDataURL(file); };
-  const name = [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.username || "Eventora member";
-  return <><Header /><main className="min-h-screen bg-[#0d1420] px-4 pb-16 pt-24 text-white sm:px-8"><div className="mx-auto max-w-7xl"><div className="grid gap-5 lg:grid-cols-[210px_1fr]"><aside className="hidden rounded-2xl border border-white/10 bg-[#171e2b] p-5 lg:block"><p className="text-xs uppercase tracking-[.25em] text-[#00ff85]">Account</p><nav className="mt-7 space-y-2"><a href="#profile" className="block rounded-lg bg-[#00ff85] px-4 py-2.5 font-semibold text-black">Profile</a><a href="#content" className="block rounded-lg px-4 py-2.5 text-slate-300 hover:bg-white/10">My activity</a></nav></aside><section className="min-w-0"><div id="profile" className="rounded-2xl border border-white/10 bg-[#112b2a] p-5 sm:p-7"><div className="flex flex-wrap items-end gap-5"><div className="grid h-24 w-24 place-items-center overflow-hidden rounded-2xl border-4 border-[#0d1420] bg-[#00ff85] text-3xl font-bold text-black">{preview ? <img src={preview} alt="Profile" className="h-full w-full object-cover" /> : <UserRound size={38} />}</div><div className="min-w-0 flex-1"><h1 className="text-2xl font-semibold sm:text-3xl">{name}</h1><p className="mt-1 text-sm text-slate-400">@{user?.username || "member"}</p><div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-300"><span className="inline-flex items-center gap-1"><Mail size={13} />{user?.email}</span><span className="inline-flex items-center gap-1"><CalendarDays size={13} />Joined {user?.date_joined ? new Date(user.date_joined).toLocaleDateString() : "—"}</span></div></div>{!editing && <button type="button" onClick={() => setEditing(true)} className="inline-flex items-center gap-2 rounded-lg bg-[#00ff85] px-4 py-2 text-sm font-semibold text-black"><Pencil size={15} /> Edit Profile</button>}</div>{editing && <form onSubmit={save} className="mt-6 grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-2"><input name="username" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} required placeholder="Username" className="rounded-lg border border-white/10 bg-[#0d1420] px-3 py-2.5 text-sm text-white" /><input name="first_name" value={form.first_name} onChange={(event) => setForm({ ...form, first_name: event.target.value })} placeholder="First name" className="rounded-lg border border-white/10 bg-[#0d1420] px-3 py-2.5 text-sm text-white" /><input name="last_name" value={form.last_name} onChange={(event) => setForm({ ...form, last_name: event.target.value })} placeholder="Last name" className="rounded-lg border border-white/10 bg-[#0d1420] px-3 py-2.5 text-sm text-white" /><label className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-slate-300">Choose profile picture<input type="file" accept="image/*" onChange={selectImage} className="hidden" /></label><div className="flex gap-3 sm:col-span-2"><button className="rounded-lg bg-[#00ff85] px-4 py-2 font-semibold text-black">Save changes</button><button type="button" onClick={() => { setEditing(false); setPreview(user?.profile_picture || ""); }} className="rounded-lg border border-white/15 px-4 py-2">Cancel</button></div></form>}{message && <p className="mt-4 text-sm text-emerald-300">{message}</p>}{error && <p className="mt-4 text-sm text-red-300">{error}</p>}<div className="mt-6 grid gap-3 sm:grid-cols-2">{stats.map(({ label, value, icon: Icon }) => <div key={label} className="rounded-xl bg-black/20 p-4"><Icon className="text-[#00ff85]" size={18} /><p className="mt-3 text-2xl font-semibold">{value}</p><p className="text-xs text-slate-400">{label}</p></div>)}</div></div><div id="content" className="mt-5">{children}</div></section></div></div></main></>;
+
+  const [form, setForm] = useState({
+    username: user?.username || "",
+    first_name: user?.first_name || "",
+    last_name: user?.last_name || "",
+    profile_picture: user?.profile_picture || "",
+  });
+
+  const [preview, setPreview] = useState(user?.profile_picture || "");
+
+  const save = async (event) => {
+    event.preventDefault();
+
+    setError("");
+    setMessage("");
+
+    try {
+      const { data } = await authApi.profile(form);
+
+      updateUser(data.user);
+      setMessage("Profile updated successfully.");
+      setEditing(false);
+    } catch (saveError) {
+      const data = saveError.response?.data;
+
+      setError(
+        data?.detail ||
+          (data && typeof data === "object"
+            ? Object.values(data).flat().join(" ")
+            : "Unable to update profile.")
+      );
+    }
+  };
+
+  const selectImage = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Profile image must be smaller than 2 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setPreview(reader.result);
+
+      setForm((current) => ({
+        ...current,
+        profile_picture: reader.result,
+      }));
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setPreview(user?.profile_picture || "");
+  };
+
+  const name =
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
+    user?.username ||
+    "Eventora member";
+
+  return (
+    <>
+      <Header />
+
+      <main className="min-h-screen bg-[#0d1420] px-4 pb-16 pt-24 text-white sm:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-5 lg:grid-cols-[210px_1fr]">
+            {/* Sidebar */}
+            <aside className="hidden rounded-2xl border border-white/10 bg-[#171e2b] p-5 lg:block">
+              <p className="text-xs uppercase tracking-[.25em] text-[#00ff85]">
+                Account
+              </p>
+
+              <nav className="mt-7 space-y-2">
+                <a
+                  href="#profile"
+                  className="block rounded-lg bg-[#00ff85] px-4 py-2.5 font-semibold text-black"
+                >
+                  Profile
+                </a>
+
+                <a
+                  href="#content"
+                  className="block rounded-lg px-4 py-2.5 text-slate-300 hover:bg-white/10"
+                >
+                  My activity
+                </a>
+              </nav>
+            </aside>
+
+            <section className="min-w-0">
+              <div
+                id="profile"
+                className="rounded-2xl border border-white/10 bg-[#112b2a] p-5 sm:p-7"
+              >
+                <div className="flex flex-wrap items-end gap-5">
+                  <div className="grid h-24 w-24 place-items-center overflow-hidden rounded-2xl border-4 border-[#0d1420] bg-[#00ff85] text-3xl font-bold text-black">
+                    {preview ? (
+                      <img
+                        src={preview}
+                        alt="Profile"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <UserRound size={38} />
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-2xl font-semibold sm:text-3xl">
+                      {name}
+                    </h1>
+
+                    <p className="mt-1 text-sm text-slate-400">
+                      @{user?.username || "member"}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-300">
+                      <span className="inline-flex items-center gap-1">
+                        <Mail size={13} />
+                        {user?.email}
+                      </span>
+
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarDays size={13} />
+                        Joined{" "}
+                        {user?.date_joined
+                          ? new Date(
+                              user.date_joined
+                            ).toLocaleDateString()
+                          : "—"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {!editing && (
+                    <button
+                      type="button"
+                      onClick={() => setEditing(true)}
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#00ff85] px-4 py-2 text-sm font-semibold text-black"
+                    >
+                      <Pencil size={15} />
+                      Edit Profile
+                    </button>
+                  )}
+                </div>
+
+                {editing && (
+                  <form
+                    onSubmit={save}
+                    className="mt-6 grid gap-3 border-t border-white/10 pt-5 sm:grid-cols-2"
+                  >
+                    <input
+                      name="username"
+                      value={form.username}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          username: event.target.value,
+                        })
+                      }
+                      required
+                      placeholder="Username"
+                      className="rounded-lg border border-white/10 bg-[#0d1420] px-3 py-2.5 text-sm text-white"
+                    />
+
+                    <input
+                      name="first_name"
+                      value={form.first_name}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          first_name: event.target.value,
+                        })
+                      }
+                      placeholder="First name"
+                      className="rounded-lg border border-white/10 bg-[#0d1420] px-3 py-2.5 text-sm text-white"
+                    />
+
+                    <input
+                      name="last_name"
+                      value={form.last_name}
+                      onChange={(event) =>
+                        setForm({
+                          ...form,
+                          last_name: event.target.value,
+                        })
+                      }
+                      placeholder="Last name"
+                      className="rounded-lg border border-white/10 bg-[#0d1420] px-3 py-2.5 text-sm text-white"
+                    />
+
+                    <label className="rounded-lg border border-white/10 px-3 py-2.5 text-sm text-slate-300">
+                      Choose profile picture
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={selectImage}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <div className="flex gap-3 sm:col-span-2">
+                      <button
+                        type="submit"
+                        className="rounded-lg bg-[#00ff85] px-4 py-2 font-semibold text-black"
+                      >
+                        Save changes
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={cancelEditing}
+                        className="rounded-lg border border-white/15 px-4 py-2"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {message && (
+                  <p className="mt-4 text-sm text-emerald-300">
+                    {message}
+                  </p>
+                )}
+
+                {error && (
+                  <p className="mt-4 text-sm text-red-300">
+                    {error}
+                  </p>
+                )}
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {stats.map(({ label, value, icon: Icon }) => (
+                    <div
+                      key={label}
+                      className="rounded-xl bg-black/20 p-4"
+                    >
+                      <Icon
+                        className="text-[#00ff85]"
+                        size={18}
+                      />
+
+                      <p className="mt-3 text-2xl font-semibold">
+                        {value}
+                      </p>
+
+                      <p className="text-xs text-slate-400">
+                        {label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div id="content" className="mt-5">
+                {children}
+              </div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </>
+  );
 }
