@@ -19,7 +19,6 @@ export default function UserProfileLayout() {
       </p>
 
       <nav className="mt-7 space-y-2">
-        {/* Profile */}
         <a
           href="#profile"
           className="flex items-center gap-2 rounded-lg bg-[#00ff85] px-4 py-2.5 font-semibold text-black"
@@ -28,7 +27,6 @@ export default function UserProfileLayout() {
           Profile
         </a>
 
-        {/* Wallet */}
         <button
           type="button"
           disabled
@@ -38,7 +36,6 @@ export default function UserProfileLayout() {
           Wallet
         </button>
 
-        {/* Logout */}
         <button
           type="button"
           onClick={signOut}
