@@ -5,7 +5,7 @@ import Header from "./Header";
 import { useAuth } from "../../hooks/useAuth";
 import { authApi } from "../../services/auth";
 
-export default function ProfileEditor({ stats, children }) {
+export default function ProfileEditor({ stats, children, Sidebar }) {
   const { user, updateUser } = useAuth();
 
   const [editing, setEditing] = useState(false);
@@ -86,28 +86,7 @@ export default function ProfileEditor({ stats, children }) {
       <main className="min-h-screen bg-[#0d1420] px-4 pb-16 pt-24 text-white sm:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-5 lg:grid-cols-[210px_1fr]">
-            {/* Sidebar */}
-            <aside className="hidden rounded-2xl border border-white/10 bg-[#171e2b] p-5 lg:block">
-              <p className="text-xs uppercase tracking-[.25em] text-[#00ff85]">
-                Account
-              </p>
-
-              <nav className="mt-7 space-y-2">
-                <a
-                  href="#profile"
-                  className="block rounded-lg bg-[#00ff85] px-4 py-2.5 font-semibold text-black"
-                >
-                  Profile
-                </a>
-
-                <a
-                  href="#content"
-                  className="block rounded-lg px-4 py-2.5 text-slate-300 hover:bg-white/10"
-                >
-                  My activity
-                </a>
-              </nav>
-            </aside>
+            {Sidebar ? <Sidebar /> : null}
 
             <section className="min-w-0">
               <div

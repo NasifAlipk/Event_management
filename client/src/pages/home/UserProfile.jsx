@@ -1,5 +1,6 @@
 import { CalendarDays, Ticket } from "lucide-react";
 import ProfileEditor from "../../components/home/ProfileEditor";
+import Sidebar from "../../components/layout/profile/UserProfile";
 
 function EmptySection({ title, message, icon: Icon }) {
   return (
@@ -36,7 +37,7 @@ export default function UserProfile() {
   ];
 
   return (
-    <ProfileEditor stats={stats}>
+    <ProfileEditor stats={stats} Sidebar={Sidebar}>
       <div className="grid gap-5 xl:grid-cols-2">
         <EmptySection
           title="Booked Tickets"

@@ -13,6 +13,7 @@ import { Link } from "react-router-dom";
 import ProfileEditor from "../../components/home/ProfileEditor";
 import { eventsApi } from "../../services/events";
 import ConfirmModal from "../../components/ui/ConfirmModal";
+import Sidebar from "../../components/layout/profile/OrganizerProfile";
 
 function EventCard({ event, onDelete }) {
   return (
@@ -113,6 +114,7 @@ export default function OrganizerProfile() {
 
   return (
     <ProfileEditor
+      Sidebar={Sidebar}
       stats={[
         {
           label: "Organized Events",
