@@ -21,6 +21,11 @@ class CouponSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"code": "Coupon code may contain only letters, numbers, and hyphens."})
         if len(code) < 3:
             raise serializers.ValidationError({"code": "Coupon code must be at least 3 characters."})
+        duplicate = Coupon.objects.filter(code=code)
+        if self.instance is not None:
+            duplicate = duplicate.exclude(pk=self.instance.pk)
+        if duplicate.exists():
+            raise serializers.ValidationError({"code": "This coupon code is already in use. Choose a different code."})
         if values.get("start_date") > values.get("end_date"):
             raise serializers.ValidationError({"end_date": "End date must be on or after the start date."})
         value = Decimal(values.get("discount_value", 0))

@@ -4,13 +4,16 @@ import {
   UserRound,
   Wallet,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../../hooks/useAuth";
 
 export default function OrganizerProfileLayout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const profileActive = location.pathname === "/profile";
+  const couponsActive = location.pathname.startsWith("/coupons");
 
   const signOut = async () => {
     await logout();
@@ -24,17 +27,21 @@ export default function OrganizerProfileLayout() {
       </p>
 
       <nav className="mt-7 space-y-2">
-        <a
-          href="#profile"
-          className="flex items-center gap-2 rounded-lg bg-[#00ff85] px-4 py-2.5 font-semibold text-black"
+        <Link
+          to="/profile"
+          className={`flex w-full items-center gap-2 rounded-lg px-4 py-2.5 font-semibold ${
+            profileActive
+              ? "bg-[#00ff85] text-black"
+              : "text-slate-300 hover:bg-white/10"
+          }`}
         >
           <UserRound size={16} />
           Profile
-        </a>
+        </Link>
 
         <Link
           to="/coupons"
-          className="flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-left text-slate-500"
+          className={`flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-left ${couponsActive ? "bg-[#00ff85] text-black" : "text-slate-300 hover:bg-white/10"}`}
         >
           <Ticket size={16} />
           Coupon

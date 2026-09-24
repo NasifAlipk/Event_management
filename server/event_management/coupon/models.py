@@ -13,7 +13,7 @@ class Coupon(models.Model):
         REJECTED = "REJECTED", "Rejected"
 
     organizer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="coupons")
-    code = models.CharField(max_length=40)
+    code = models.CharField(max_length=40, unique=True)
     name = models.CharField(max_length=120)
     description = models.TextField(max_length=300, blank=True, default="")
     discount_type = models.CharField(max_length=12, choices=DiscountType.choices)
@@ -31,7 +31,6 @@ class Coupon(models.Model):
 
     class Meta:
         ordering = ("-created_at",)
-        constraints = [models.UniqueConstraint(fields=("organizer", "code"), name="unique_coupon_code_per_organizer")]
 
     def __str__(self):
         return f"{self.code} - {self.name}"

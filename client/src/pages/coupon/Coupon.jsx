@@ -1,14 +1,210 @@
 import { useEffect, useState } from "react";
-import { Edit3, PlusCircle, TicketPercent, Trash2 } from "lucide-react";
+import {
+  Edit3,
+  PlusCircle,
+  TicketPercent,
+  Trash2,
+} from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
-import ExploreLayout from "../../components/layout/Explore/Layout";
+
+import Header from "../../components/home/Header";
+import OrganizerSidebar from "../../components/layout/profile/OrganizerProfile";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import { couponsApi } from "../../services/coupons";
 
-const status = { PENDING: "bg-amber-400/15 text-amber-300", APPROVED: "bg-emerald-400/15 text-emerald-300", REJECTED: "bg-red-400/15 text-red-300" };
+const statusClasses = {
+  PENDING: "bg-amber-400/15 text-amber-300",
+  APPROVED: "bg-emerald-400/15 text-emerald-300",
+  REJECTED: "bg-red-400/15 text-red-300",
+};
+
 export default function Coupon() {
-  const [coupons, setCoupons] = useState([]); const [loading, setLoading] = useState(true); const [selected, setSelected] = useState(null); const [deleting, setDeleting] = useState(false); const location = useLocation();
-  useEffect(() => { couponsApi.organizer().then(({ data }) => setCoupons(data.coupons || [])).finally(() => setLoading(false)); }, []);
-  const remove = async () => { setDeleting(true); try { await couponsApi.remove(selected.id); setCoupons((items) => items.filter((item) => item.id !== selected.id)); setSelected(null); } finally { setDeleting(false); } };
-  return <ExploreLayout><main className="min-h-screen bg-[#0d1418] px-4 pb-16 pt-24 text-white sm:px-8"><div className="mx-auto max-w-6xl"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm uppercase tracking-[.22em] text-[#00ff85]">Organizer workspace</p><h1 className="mt-2 text-4xl font-light">Coupons</h1><p className="mt-2 text-slate-400">Create and manage discounts for your events.</p></div><Link to="/coupons/add" className="inline-flex items-center gap-2 rounded-lg bg-[#00ff85] px-4 py-2.5 font-semibold text-black"><PlusCircle size={17} /> Add coupon</Link></div>{location.state?.message && <p className="mt-5 rounded-xl border border-[#00ff85]/30 bg-[#00ff85]/10 p-3 text-sm text-[#00ff85]">{location.state.message}</p>}<section className="mt-7 space-y-3">{loading ? <p className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-slate-400">Loading coupons...</p> : coupons.length ? coupons.map((coupon) => <article key={coupon.id} className="rounded-2xl border border-white/10 bg-[#171e25] p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="font-mono text-lg font-semibold text-[#00ff85]">{coupon.code}</p><h2 className="mt-1 text-xl font-semibold">{coupon.name}</h2><p className="mt-2 text-sm text-slate-400">{coupon.description || "No description provided."}</p></div><span className={`rounded-full px-3 py-1 text-xs ${status[coupon.status]}`}>{coupon.status === "PENDING" ? "Pending Review" : coupon.status}</span></div><div className="mt-5 grid gap-3 text-sm text-slate-300 sm:grid-cols-4"><span><b className="text-white">Discount</b><br />{coupon.discount_type === "PERCENTAGE" ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`}</span><span><b className="text-white">Valid</b><br />{coupon.start_date} – {coupon.end_date}</span><span><b className="text-white">Minimum purchase</b><br />₹{coupon.minimum_purchase}</span><span><b className="text-white">Rejection reason</b><br />{coupon.rejection_reason || "—"}</span></div><div className="mt-4 flex justify-end gap-2"><Link to={`/coupons/edit/${coupon.id}`} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm hover:border-[#00ff85]/50"><Edit3 size={15} /> Edit</Link><button type="button" onClick={() => setSelected(coupon)} className="inline-flex items-center gap-2 rounded-lg border border-red-400/30 px-3 py-2 text-sm text-red-300 hover:bg-red-400/10"><Trash2 size={15} /> Delete</button></div></article>) : <p className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-slate-400"><TicketPercent className="mx-auto mb-3 text-[#00ff85]" />You have not created any coupons yet.</p>}</section></div>{selected && <ConfirmModal title="Delete Coupon?" message={`Delete coupon ${selected.code}? This action cannot be undone.`} confirmLabel="Delete coupon" loading={deleting} onCancel={() => !deleting && setSelected(null)} onConfirm={remove} />}</main></ExploreLayout>;
+  const [coupons, setCoupons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    couponsApi
+      .organizer()
+      .then(({ data }) => {
+        setCoupons(data.coupons || []);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  const remove = async () => {
+    setDeleting(true);
+
+    try {
+      await couponsApi.remove(selected.id);
+
+      setCoupons((items) =>
+        items.filter((item) => item.id !== selected.id)
+      );
+
+      setSelected(null);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <>
+      <Header />
+      <main className="min-h-screen bg-[#0d1420] px-4 pb-16 pt-24 text-white sm:px-8">
+        <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[210px_1fr]">
+          <OrganizerSidebar />
+
+          <section className="min-w-0">
+            <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-white/10 bg-[#112b2a] p-5 sm:p-7">
+              <div>
+                <p className="text-sm uppercase tracking-[.22em] text-[#00ff85]">
+                  Organizer workspace
+                </p>
+
+                <h1 className="mt-2 text-4xl font-light">
+                  Coupons
+                </h1>
+
+                <p className="mt-2 text-slate-400">
+                  Create and manage discounts for your events.
+                </p>
+              </div>
+
+              <Link
+                to="/coupons/add"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#00ff85] px-4 py-2.5 font-semibold text-black"
+              >
+                <PlusCircle size={17} />
+                Add coupon
+              </Link>
+            </div>
+
+            {location.state?.message && (
+              <p className="mt-5 rounded-xl border border-[#00ff85]/30 bg-[#00ff85]/10 p-3 text-sm text-[#00ff85]">
+                {location.state.message}
+              </p>
+            )}
+
+            <section className="mt-5 space-y-3">
+              {loading ? (
+                <p className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-slate-400">
+                  Loading coupons...
+                </p>
+              ) : coupons.length ? (
+                coupons.map((coupon) => (
+                  <article
+                    key={coupon.id}
+                    className="rounded-2xl border border-white/10 bg-[#171e2b] p-5"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <p className="font-mono text-lg font-semibold text-[#00ff85]">
+                          {coupon.code}
+                        </p>
+
+                        <h2 className="mt-1 text-xl font-semibold">
+                          {coupon.name}
+                        </h2>
+
+                        <p className="mt-2 text-sm text-slate-400">
+                          {coupon.description ||
+                            "No description provided."}
+                        </p>
+                      </div>
+
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs ${
+                          statusClasses[coupon.status]
+                        }`}
+                      >
+                        {coupon.status === "PENDING"
+                          ? "Pending Review"
+                          : coupon.status}
+                      </span>
+                    </div>
+
+                    <div className="mt-5 grid gap-3 text-sm text-slate-300 sm:grid-cols-4">
+                      <span>
+                        <b className="text-white">Discount</b>
+                        <br />
+
+                        {coupon.discount_type === "PERCENTAGE"
+                          ? `${coupon.discount_value}%`
+                          : `₹${coupon.discount_value}`}
+                      </span>
+
+                      <span>
+                        <b className="text-white">Valid</b>
+                        <br />
+
+                        {coupon.start_date} – {coupon.end_date}
+                      </span>
+
+                      <span>
+                        <b className="text-white">
+                          Minimum purchase
+                        </b>
+                        <br />
+
+                        ₹{coupon.minimum_purchase}
+                      </span>
+
+                      <span>
+                        <b className="text-white">
+                          Rejection reason
+                        </b>
+                        <br />
+                        {coupon.rejection_reason || "Nil"}
+                      </span>
+                    </div>
+
+                    <div className="mt-4 flex justify-end gap-2">
+                      <Link
+                        to={`/coupons/edit/${coupon.id}`}
+                        className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm hover:border-[#00ff85]/50"
+                      >
+                        <Edit3 size={15} />
+                        Edit
+                      </Link>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelected(coupon)}
+                        className="inline-flex items-center gap-2 rounded-lg border border-red-400/30 px-3 py-2 text-sm text-red-300 hover:bg-red-400/10"
+                      >
+                        <Trash2 size={15} />
+                        Delete
+                      </button>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <p className="rounded-2xl border border-dashed border-white/10 p-10 text-center text-slate-400">
+                  <TicketPercent className="mx-auto mb-3 text-[#00ff85]" />
+                  You have not created any coupons yet.
+                </p>
+              )}
+            </section>
+          </section>
+        </div>
+      </main>
+
+      {selected && (
+        <ConfirmModal
+          title="Delete Coupon?"
+          message={`Delete coupon ${selected.code}? This action cannot be undone.`}
+          confirmLabel="Delete coupon"
+          loading={deleting}
+          onCancel={() => !deleting && setSelected(null)}
+          onConfirm={remove}
+        />
+      )}
+    </>
+  );
 }
