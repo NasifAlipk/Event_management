@@ -1,7 +1,192 @@
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+
 import Layout from "../../components/layout/admin/Layout";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import { couponsApi } from "../../services/coupons";
-export default function CouponDetails() { const { couponId } = useParams(); const navigate = useNavigate(); const [coupon, setCoupon] = useState(null); const [action, setAction] = useState(null); const [reason, setReason] = useState(""); const [saving, setSaving] = useState(false); const [error, setError] = useState(""); useEffect(() => { couponsApi.adminCoupon(couponId).then(({ data }) => setCoupon(data.coupon)).catch(() => setError("Unable to load coupon.")); }, [couponId]); const review = async (status) => { setSaving(true); try { await couponsApi.review(couponId, status, reason); navigate("/admin/coupons", { replace: true }); } catch (e) { setError(e.response?.data?.detail || "Unable to update coupon."); } finally { setSaving(false); } }; if (!coupon) return <Layout><main className="p-10 text-slate-400">{error || "Loading coupon..."}</main></Layout>; return <Layout><main className="min-h-screen bg-[#0f0c29] px-5 py-8 text-white sm:px-10"><div className="mx-auto max-w-4xl"><Link to="/admin/coupons" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-[#00ff85]"><ArrowLeft size={16} /> Back to coupons</Link><h1 className="mt-6 text-3xl font-light">Coupon Details</h1>{error && <p className="mt-4 text-red-300">{error}</p>}<section className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-6 sm:grid-cols-2">{[["Code", coupon.code], ["Name", coupon.name], ["Organizer", coupon.organizer_name], ["Discount", coupon.discount_type === "PERCENTAGE" ? `${coupon.discount_value}%` : `₹${coupon.discount_value}`], ["Valid dates", `${coupon.start_date} – ${coupon.end_date}`], ["Minimum purchase", `₹${coupon.minimum_purchase}`], ["Total usage limit", coupon.usage_limit_total || "Unlimited"], ["Per-user limit", coupon.usage_limit_per_user || "Unlimited"], ["Description", coupon.description || "—"], ["Status", coupon.status], ["Rejection reason", coupon.rejection_reason || "—"]].map(([label, value]) => <div key={label} className="rounded-xl border border-white/10 bg-black/10 p-4"><p className="text-xs uppercase tracking-wide text-slate-500">{label}</p><p className="mt-2 text-slate-200">{value}</p></div>)}</section>{coupon.status === "PENDING" && <div className="mt-6 flex justify-end gap-3"><button onClick={() => setAction("REJECTED")} className="rounded-lg border border-red-400/40 px-5 py-2.5 text-red-300">Reject</button><button onClick={() => setAction("APPROVED")} className="rounded-lg bg-[#00ff85] px-5 py-2.5 font-semibold text-black">Approve coupon</button></div>}</div>{action && <ConfirmModal type={action === "REJECTED" ? "reject" : "approve"} reason={reason} onReasonChange={setReason} title={action === "REJECTED" ? "Reject Coupon?" : "Approve Coupon?"} message={action === "REJECTED" ? "Provide a reason so the organizer understands why this coupon was rejected." : "Approve this coupon for use by event attendees?"} confirmLabel={action === "REJECTED" ? "Reject coupon" : "Approve coupon"} loading={saving} onCancel={() => !saving && setAction(null)} onConfirm={() => review(action)} />}</main></Layout>; }
+
+export default function CouponDetails() {
+  const { couponId } = useParams();
+  const navigate = useNavigate();
+
+  const [coupon, setCoupon] = useState(null);
+  const [action, setAction] = useState(null);
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    couponsApi
+      .adminCoupon(couponId)
+      .then(({ data }) => setCoupon(data.coupon))
+      .catch(() => setError("Unable to load coupon."));
+  }, [couponId]);
+
+  const review = async (status) => {
+    setSaving(true);
+
+    try {
+      await couponsApi.review(couponId, status, reason);
+
+      navigate("/admin/coupons", {
+        replace: true,
+      });
+    } catch (error) {
+      setError(
+        error.response?.data?.detail ||
+          "Unable to update coupon.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (!coupon) {
+    return (
+      <Layout>
+        <main className="p-10 text-slate-400">
+          {error || "Loading coupon..."}
+        </main>
+      </Layout>
+    );
+  }
+
+  const details = [
+    ["Code", coupon.code],
+    ["Name", coupon.name],
+    ["Organizer", coupon.organizer_name],
+    [
+      "Discount",
+      coupon.discount_type === "PERCENTAGE"
+        ? `${coupon.discount_value}%`
+        : `₹${coupon.discount_value}`,
+    ],
+    [
+      "Valid dates",
+      `${coupon.start_date} – ${coupon.end_date}`,
+    ],
+    [
+      "Minimum purchase",
+      `₹${coupon.minimum_purchase}`,
+    ],
+    [
+      "Total usage limit",
+      coupon.usage_limit_total || "Unlimited",
+    ],
+    [
+      "Per-user limit",
+      coupon.usage_limit_per_user || "Unlimited",
+    ],
+    [
+      "Description",
+      coupon.description || "—",
+    ],
+    ["Status", coupon.status],
+    [
+      "Rejection reason",
+      coupon.rejection_reason || "—",
+    ],
+  ];
+
+  return (
+    <Layout>
+      <main className="min-h-screen bg-[#0f0c29] px-5 py-8 text-white sm:px-10">
+        <div className="mx-auto max-w-4xl">
+          {/* Back navigation */}
+          <Link
+            to="/admin/coupons"
+            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-[#00ff85]"
+          >
+            <ArrowLeft size={16} />
+            Back to coupons
+          </Link>
+
+          {/* Page heading */}
+          <h1 className="mt-6 text-3xl font-light">
+            Coupon Details
+          </h1>
+
+          {/* Error message */}
+          {error && (
+            <p className="mt-4 text-red-300">
+              {error}
+            </p>
+          )}
+
+          {/* Coupon details */}
+          <section className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-6 sm:grid-cols-2">
+            {details.map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-xl border border-white/10 bg-black/10 p-4"
+              >
+                <p className="text-xs uppercase tracking-wide text-slate-500">
+                  {label}
+                </p>
+
+                <p className="mt-2 text-slate-200">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </section>
+
+          {/* Review actions */}
+          {coupon.status === "PENDING" && (
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setAction("REJECTED")}
+                className="rounded-lg border border-red-400/40 px-5 py-2.5 text-red-300 hover:bg-red-400/10"
+              >
+                Reject
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAction("APPROVED")}
+                className="rounded-lg bg-[#00ff85] px-5 py-2.5 font-semibold text-black hover:bg-[#00d970]"
+              >
+                Approve coupon
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Confirmation modal */}
+        {action && (
+          <ConfirmModal
+            type={
+              action === "REJECTED"
+                ? "reject"
+                : "approve"
+            }
+            reason={reason}
+            onReasonChange={setReason}
+            title={
+              action === "REJECTED"
+                ? "Reject Coupon?"
+                : "Approve Coupon?"
+            }
+            message={
+              action === "REJECTED"
+                ? "Provide a reason so the organizer understands why this coupon was rejected."
+                : "Approve this coupon for use by event attendees?"
+            }
+            confirmLabel={
+              action === "REJECTED"
+                ? "Reject coupon"
+                : "Approve coupon"
+            }
+            loading={saving}
+            onCancel={() =>
+              !saving && setAction(null)
+            }
+            onConfirm={() => review(action)}
+          />
+        )}
+      </main>
+    </Layout>
+  );
+}
