@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
+  
   // this is for the Tonnal link cration
   server: {
     // this is the tunnnal link for the react
