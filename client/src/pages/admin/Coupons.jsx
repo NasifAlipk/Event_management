@@ -153,14 +153,12 @@ export default function Coupons() {
               </tbody>
             </table>
 
-            {/* Loading state */}
             {loading && (
               <p className="p-10 text-center text-slate-400">
                 Loading coupons...
               </p>
             )}
 
-            {/* Empty state */}
             {!loading && !visible.length && (
               <div className="p-10 text-center text-slate-400">
                 <TicketPercent className="mx-auto mb-2" />

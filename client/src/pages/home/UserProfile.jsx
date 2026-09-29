@@ -41,13 +41,13 @@ export default function UserProfile() {
       <div className="grid gap-5 xl:grid-cols-2">
         <EmptySection
           title="Booked Tickets"
-          message="You have not booked any tickets yet. Explore events to find your next experience."
+          message="In here you can see teh Booked Tickets now you have not have any boooked ticket"
           icon={Ticket}
         />
 
         <EmptySection
           title="Participated Events"
-          message="Your attended events will appear here after you participate in an event."
+          message="Your attended events will show in here."
           icon={CalendarDays}
         />
       </div>
