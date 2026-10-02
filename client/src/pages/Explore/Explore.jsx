@@ -3,7 +3,6 @@ import {
   CalendarPlus,
   CalendarDays,
   ChevronDown,
-  Filter,
   Search,
   SlidersHorizontal,
 } from "lucide-react";
@@ -22,6 +21,8 @@ export default function Explore() {
   const [category, setCategory] = useState("");
   const [type, setType] = useState("");
   const [date, setDate] = useState("");
+  const [sortOrder, setSortOrder] = useState("");
+  const [page, setPage] = useState(1);
 
   const isOrganizer = user?.role === "ORGANIZER";
 
@@ -34,7 +35,11 @@ export default function Explore() {
 
   const categories = [...new Set(events.map((event) => event.category).filter(Boolean))];
   const types = [...new Set(events.map((event) => event.event_type).filter(Boolean))];
-  const visibleEvents = events.filter((event) => event.title.toLowerCase().includes(query.toLowerCase()) && (!category || event.category === category) && (!type || event.event_type === type) && (!date || event.start_date === date));
+  const filteredEvents = events.filter((event) => event.title.toLowerCase().includes(query.toLowerCase()) && (!category || event.category === category) && (!type || event.event_type === type) && (!date || event.start_date === date));
+  const visibleEvents = [...filteredEvents].sort((first, second) => sortOrder ? (sortOrder === "AZ" ? first.title.localeCompare(second.title) : second.title.localeCompare(first.title)) : 0);
+  const pageSize = 8;
+  const pageCount = Math.max(1, Math.ceil(visibleEvents.length / pageSize));
+  const paginatedEvents = visibleEvents.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <ExploreLayout>
@@ -82,7 +87,7 @@ export default function Explore() {
 
                 <input
                   value={query}
-                  onChange={(event) => setQuery(event.target.value)}
+                  onChange={(event) => { setQuery(event.target.value); setPage(1); }}
                   placeholder="Search events..."
                   className="w-full bg-transparent py-3 text-sm text-white outline-none placeholder:text-slate-600"
                 />
@@ -96,21 +101,15 @@ export default function Explore() {
               </button>
 
               <div className="flex flex-wrap gap-2">
-                {[["Category", category, setCategory, categories], ["Type", type, setType, types]].map(([label, value, setter, options]) => <label key={label} className="relative inline-flex items-center rounded-xl border border-white/10 bg-[#0d1418] text-sm text-slate-300 hover:border-[#00ff85]/40"><select value={value} onChange={(event) => setter(event.target.value)} className="appearance-none bg-transparent py-3 pl-4 pr-10 outline-none"><option value="">{label}</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3" size={15} /></label>)}
+                {[["Category", category, setCategory, categories], ["Type", type, setType, types]].map(([label, value, setter, options]) => <label key={label} className="relative inline-flex items-center rounded-xl border border-white/10 bg-[#0d1418] text-sm text-slate-300 hover:border-[#00ff85]/40"><select value={value} onChange={(event) => { setter(event.target.value); setPage(1); }} className="appearance-none bg-transparent py-3 pl-4 pr-10 outline-none"><option value="">{label}</option>{options.map((option) => <option key={option} value={option}>{option}</option>)}</select><ChevronDown className="pointer-events-none absolute right-3" size={15} /></label>)}
 
                 <label className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#0d1418] px-3 text-sm text-slate-300 hover:border-[#00ff85]/40">
                   <CalendarDays size={16} className="text-[#00ff85]" />
                   <span className="text-xs text-slate-500">Date</span>
-                  <input type="date" value={date} onChange={(event) => setDate(event.target.value)} style={{ colorScheme: "dark" }} className="bg-transparent py-2.5 text-sm text-white outline-none" aria-label="Filter by date" />
+                  <input type="date" value={date} onChange={(event) => { setDate(event.target.value); setPage(1); }} style={{ colorScheme: "dark" }} className="bg-transparent py-2.5 text-sm text-white outline-none" aria-label="Filter by date" />
                 </label>
 
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#00ff85]/30 px-4 py-3 text-sm text-[#00ff85] hover:bg-[#00ff85]/10"
-                >
-                  <Filter size={15} />
-                  Filters
-                </button>
+                <label className="relative inline-flex items-center rounded-xl border border-white/10 bg-[#0d1418] text-sm text-slate-300 hover:border-[#00ff85]/40"><select value={sortOrder} onChange={(event) => { setSortOrder(event.target.value); setPage(1); }} className="appearance-none bg-transparent py-3 pl-4 pr-10 outline-none"><option value="">Sort by</option><option value="AZ">A to Z</option><option value="ZA">Z to A</option></select><ChevronDown className="pointer-events-none absolute right-3" size={15} /></label>
               </div>
             </div>
           </section>
@@ -161,7 +160,7 @@ export default function Explore() {
               </div>
             ) : (
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {visibleEvents.map((event) => (
+                {paginatedEvents.map((event) => (
                   <Link
                     to={`/events/${event.id}`}
                     key={event.id}
@@ -195,6 +194,14 @@ export default function Explore() {
               </div>
             )}
           </section>
+
+          {!loading && visibleEvents.length > pageSize && (
+            <div className="mt-6 flex items-center justify-center gap-2">
+              <button type="button" disabled={page === 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-300 disabled:opacity-40">Previous</button>
+              <span className="px-3 text-sm text-slate-400">Page {page} of {pageCount}</span>
+              <button type="button" disabled={page === pageCount} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-300 disabled:opacity-40">Next</button>
+            </div>
+          )}
 
           {location.state?.message && (
             <p className="mt-4 text-center text-sm text-emerald-300">

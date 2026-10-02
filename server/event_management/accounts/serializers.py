@@ -67,6 +67,14 @@ class RegisterSerializer(serializers.ModelSerializer):
         value = value.strip()
         if len(value) < 3:
             raise serializers.ValidationError('Username must be at least 3 characters long.')
+        if len(value) > 30:
+            raise serializers.ValidationError('Username must be 30 characters or fewer.')
+        if not value[0].isalpha():
+            raise serializers.ValidationError('Username must start with a letter.')
+        if not all(char.isalnum() or char == '_' for char in value):
+            raise serializers.ValidationError('Username can contain only letters, numbers, and underscores.')
+        if not any(char.isalnum() for char in value):
+            raise serializers.ValidationError('Username must include at least one letter or number; underscores alone are not allowed.')
         if User.objects.filter(username__iexact=value).exists():
             raise serializers.ValidationError('That username is already in use. Please choose another.')
         return value

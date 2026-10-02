@@ -64,6 +64,15 @@ class OrganizerEventDetailView(APIView):
             return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
         if request.user.role != request.user.Role.ORGANIZER:
             return Response({"detail": "Only organizers can edit events."}, status=status.HTTP_403_FORBIDDEN)
+        if request.data.get("status") == Event.Status.CANCELLED:
+            if event.status == Event.Status.CANCELLED:
+                return Response({"detail": "This event is already cancelled."}, status=status.HTTP_400_BAD_REQUEST)
+            event.status = Event.Status.CANCELLED
+            event.rejection_reason = ""
+            event.save(update_fields=("status", "rejection_reason", "updated_at"))
+            return Response({"event": EventSerializer(event, context={"request": request}).data})
+        if event.status == Event.Status.CANCELLED:
+            return Response({"detail": "Cancelled events cannot be edited."}, status=status.HTTP_400_BAD_REQUEST)
         serializer = EventSerializer(event, data=request.data, partial=True, context={"request": request})
         serializer.is_valid(raise_exception=True)
         # Any edit returns the event to review so changed details are checked.

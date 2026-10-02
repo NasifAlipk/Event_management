@@ -8,6 +8,7 @@ export const eventsApi = {
   create: (data) => api.post("/events/organizer/", data),
   update: (id, data) => api.patch(`/events/organizer/${id}/`, data),
   remove: (id) => api.delete(`/events/organizer/${id}/`),
+  cancel: (id) => api.patch(`/events/organizer/${id}/`, { status: "CANCELLED" }),
   admin: () => api.get("/events/admin/"),
   adminEvent: (id) => api.get(`/events/admin/${id}/review/`),
   review: (id, status, rejection_reason = "") => api.patch(`/events/admin/${id}/review/`, { status, rejection_reason }),

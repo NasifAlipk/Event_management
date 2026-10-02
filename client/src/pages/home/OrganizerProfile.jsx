@@ -6,7 +6,6 @@ import {
   MapPin,
   PlusCircle,
   Ticket,
-  Trash2,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -15,10 +14,11 @@ import { eventsApi } from "../../services/events";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import Sidebar from "../../components/layout/profile/OrganizerProfile";
 
-function EventCard({ event, onDelete }) {
+function EventCard({ event, onCancel }) {
+  const cancelled = event.status === "CANCELLED";
   return (
     <div
-      className="flex gap-4 rounded-xl border border-white/10 bg-[#202b3b] p-3 transition hover:border-[#00ff85]/50"
+      className={`flex gap-4 rounded-xl border p-3 transition ${cancelled ? "border-red-400/60 bg-red-950/20" : "border-white/10 bg-[#202b3b] hover:border-[#00ff85]/50"}`}
     >
       <div className="h-24 w-28 shrink-0 overflow-hidden rounded-lg bg-black">
         <img
@@ -30,13 +30,15 @@ function EventCard({ event, onDelete }) {
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="truncate font-semibold"><Link to={`/events/${event.id}`} className="hover:text-[#00ff85]">{event.title}</Link></h3>
+          <h3 className="truncate font-semibold">{cancelled ? event.title : <Link to={`/events/${event.id}`} className="hover:text-[#00ff85]">{event.title}</Link>}</h3>
 
           <div className="flex shrink-0 items-center gap-2">
           <span
             className={`shrink-0 rounded-full px-2 py-1 text-[10px] ${
               event.status === "APPROVED"
                 ? "bg-emerald-400/15 text-emerald-300"
+                : event.status === "CANCELLED"
+                  ? "bg-red-400/15 text-red-300"
                 : event.status === "REJECTED"
                   ? "bg-red-400/15 text-red-300"
                   : "bg-amber-400/15 text-amber-300"
@@ -44,10 +46,12 @@ function EventCard({ event, onDelete }) {
           >
             {event.status === "PENDING"
               ? "Pending Approval"
+              : event.status === "CANCELLED"
+                ? "Cancelled"
               : event.status}
           </span>
-          <Link to={`/events/edit/${event.id}`} onClick={(click) => click.stopPropagation()} className="rounded-md p-1.5 text-slate-400 hover:bg-white/10 hover:text-[#00ff85]" title="Edit event"><Edit3 size={15} /></Link>
-          <button type="button" onClick={(click) => { click.preventDefault(); click.stopPropagation(); onDelete(event); }} className="rounded-md p-1.5 text-slate-400 hover:bg-red-400/10 hover:text-red-300" title="Delete event"><Trash2 size={15} /></button>
+          {!cancelled && <Link to={`/events/edit/${event.id}`} onClick={(click) => click.stopPropagation()} className="rounded-md p-1.5 text-slate-400 hover:bg-white/10 hover:text-[#00ff85]" title="Edit event"><Edit3 size={15} /></Link>}
+          {!cancelled && <button type="button" onClick={(click) => { click.preventDefault(); click.stopPropagation(); onCancel(event); }} className="rounded-md px-2 py-1.5 text-xs text-red-300 hover:bg-red-400/10" title="Cancel event">Cancel</button>}
           </div>
         </div>
 
@@ -79,8 +83,8 @@ function EventCard({ event, onDelete }) {
 export default function OrganizerProfile() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDelete, setSelectedDelete] = useState(null);
-  const [deleting, setDeleting] = useState(false);
+  const [selectedCancel, setSelectedCancel] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -91,19 +95,19 @@ export default function OrganizerProfile() {
       .finally(() => setLoading(false));
   }, []);
 
-  const deleteEvent = async () => {
-    if (!selectedDelete) return;
-    setDeleting(true);
+  const cancelEvent = async () => {
+    if (!selectedCancel) return;
+    setCancelling(true);
     setError("");
     try {
-      await eventsApi.remove(selectedDelete.id);
-      setEvents((current) => current.filter((event) => event.id !== selectedDelete.id));
-      setSelectedDelete(null);
-      setMessage("Event deleted successfully.");
+      const { data } = await eventsApi.cancel(selectedCancel.id);
+      setEvents((current) => current.map((event) => event.id === selectedCancel.id ? data.event : event));
+      setSelectedCancel(null);
+      setMessage("Event cancelled successfully.");
     } catch (requestError) {
-      setError(requestError.response?.data?.detail || "Unable to delete this event.");
+      setError(requestError.response?.data?.detail || "Unable to cancel this event.");
     } finally {
-      setDeleting(false);
+      setCancelling(false);
     }
   };
 
@@ -153,7 +157,7 @@ export default function OrganizerProfile() {
               </p>
             ) : events.length ? (
                 events.map((event) => (
-                <EventCard key={event.id} event={event} onDelete={setSelectedDelete} />
+                <EventCard key={event.id} event={event} onCancel={setSelectedCancel} />
               ))
             ) : (
               <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-slate-400">
@@ -171,7 +175,7 @@ export default function OrganizerProfile() {
           <div className="mt-5 space-y-3">
             {pending.length ? (
               pending.map((event) => (
-                <EventCard key={event.id} event={event} onDelete={setSelectedDelete} />
+                <EventCard key={event.id} event={event} onCancel={setSelectedCancel} />
               ))
             ) : (
               <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-slate-400">
@@ -181,7 +185,7 @@ export default function OrganizerProfile() {
           </div>
         </section>
       </div>
-      {selectedDelete && <ConfirmModal type="approve" title="Delete Event?" message={`Are you sure you want to delete “${selectedDelete.title}”? This action cannot be undone.`} confirmLabel="Delete event" loading={deleting} onCancel={() => !deleting && setSelectedDelete(null)} onConfirm={deleteEvent} />}
+      {selectedCancel && <ConfirmModal type="approve" title="Cancel Event?" message={`Are you sure you want to cancel “${selectedCancel.title}”? Cancelled events cannot be edited or published.`} confirmLabel="Cancel event" loading={cancelling} onCancel={() => !cancelling && setSelectedCancel(null)} onConfirm={cancelEvent} />}
     </ProfileEditor>
   );
 }

@@ -7,6 +7,7 @@ class Event(models.Model):
         PENDING = "PENDING", "Pending Review"
         APPROVED = "APPROVED", "Approved"
         REJECTED = "REJECTED", "Rejected"
+        CANCELLED = "CANCELLED", "Cancelled"
 
     class Visibility(models.TextChoices):
         PUBLIC = "PUBLIC", "Public"

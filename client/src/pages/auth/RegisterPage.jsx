@@ -83,7 +83,6 @@ export default function RegisterPage() {
               name="username"
               value={form.username}
               onChange={update}
-              required
               autoComplete="username"
               placeholder="Username"
             />
@@ -96,10 +95,9 @@ export default function RegisterPage() {
             <input
               className={fieldClass}
               name="email"
-              type="email"
+              type="text"
               value={form.email}
               onChange={update}
-              required
               autoComplete="email"
               placeholder="Email address"
             />
@@ -115,7 +113,6 @@ export default function RegisterPage() {
               type="password"
               value={form.password}
               onChange={update}
-              required
               autoComplete="new-password"
               placeholder="Password"
             />
@@ -131,7 +128,6 @@ export default function RegisterPage() {
               type="password"
               value={form.password_confirm}
               onChange={update}
-              required
               autoComplete="new-password"
               placeholder="Confirm password"
             />
