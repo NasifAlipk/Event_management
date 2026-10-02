@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 
-import { authApi } from '../api/auth';
-import { AuthContext } from './authContext';
+import { authApi } from "../services/auth";
+import { AuthContext } from "./authContext";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -36,6 +36,12 @@ export function AuthProvider({ children }) {
         setUser(data.user);
       },
 
+      loginWithGoogle: async (googleUser) => {
+        const token = await googleUser.getIdToken();
+        const { data } = await authApi.googleLogin(token);
+        setUser(data.user);
+      },
+
       register: async (details) => {
         const { data } = await authApi.register(details);
         return data;
@@ -52,13 +58,11 @@ export function AuthProvider({ children }) {
 
         setUser(null);
       },
+
+      updateUser: (updatedUser) => setUser(updatedUser),
     }),
-    [user, isLoading]
+    [user, isLoading],
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

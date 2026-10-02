@@ -6,7 +6,7 @@ node_modules/
 
 # Backend
 server/venv/
-server/.env
+server/event_management/event_management/.env
 **/__pycache__
 server/*.sqlite3
 **/migrations/
