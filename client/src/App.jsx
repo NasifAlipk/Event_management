@@ -63,6 +63,7 @@ function App() {
         <Route path="/admin/coupons" element={<AdminCoupons />} />
         <Route path="/admin/coupons/:couponId" element={<AdminCouponDetails />} />
       </Route>
+      
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Home />} />
