@@ -14,6 +14,8 @@ import { eventsApi } from "../../services/events";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import Sidebar from "../../components/layout/profile/OrganizerProfile";
 
+const formatTime = (value) => value ? value.slice(0, 5) : "—";
+
 function EventCard({ event, onCancel }) {
   const cancelled = event.status === "CANCELLED";
   return (
@@ -67,7 +69,7 @@ function EventCard({ event, onCancel }) {
 
           <span className="inline-flex items-center gap-1">
             <Clock3 size={12} />
-            {event.start_time}
+            {formatTime(event.start_time)}
           </span>
 
           <span className="inline-flex items-center gap-1 sm:col-span-2">

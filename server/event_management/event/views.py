@@ -12,7 +12,10 @@ class PublishedEventsView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        events = Event.objects.filter(status=Event.Status.APPROVED, visibility=Event.Visibility.PUBLIC)
+        # Approved events are discoverable in Explore. Visibility is retained
+        # for future audience controls but should not hide approved events from
+        # the current explorer workflow.
+        events = Event.objects.filter(status=Event.Status.APPROVED)
         return Response({"events": EventSerializer(events, many=True, context={"request": request}).data})
 
 
@@ -21,7 +24,7 @@ class PublishedEventDetailView(APIView):
 
     def get(self, request, event_id):
         try:
-            event = Event.objects.get(pk=event_id, status=Event.Status.APPROVED, visibility=Event.Visibility.PUBLIC)
+            event = Event.objects.get(pk=event_id, status=Event.Status.APPROVED)
         except Event.DoesNotExist:
             return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"event": EventSerializer(event, context={"request": request}).data})

@@ -50,7 +50,13 @@ export default function Explore() {
   );
 
   const priceOf = (event) => Math.min(Number(event.regular_price || Infinity), Number(event.vip_price || Infinity), Number(event.premium_price || Infinity));
-  const visibleEvents = [...filteredEvents].sort((first, second) => sortOrder === "PRICE_LOW" ? priceOf(first) - priceOf(second) : sortOrder === "PRICE_HIGH" ? priceOf(second) - priceOf(first) : 0);
+  const visibleEvents = [...filteredEvents].sort((first, second) => {
+    if (sortOrder === "TITLE_AZ") return first.title.localeCompare(second.title);
+    if (sortOrder === "TITLE_ZA") return second.title.localeCompare(first.title);
+    if (sortOrder === "PRICE_LOW") return priceOf(first) - priceOf(second);
+    if (sortOrder === "PRICE_HIGH") return priceOf(second) - priceOf(first);
+    return 0;
+  });
 
   const pageSize = 8;
   const pageCount = Math.max(
@@ -190,6 +196,8 @@ export default function Explore() {
                     className="appearance-none bg-transparent py-3 pl-4 pr-10 outline-none"
                   >
                     <option value="">Sort by</option>
+                    <option value="TITLE_AZ">A to Z</option>
+                    <option value="TITLE_ZA">Z to A</option>
                     <option value="PRICE_LOW">Low price to high</option>
                     <option value="PRICE_HIGH">High price to low</option>
                   </select>

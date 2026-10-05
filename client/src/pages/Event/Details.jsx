@@ -19,11 +19,24 @@ export default function EventDetails() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    eventsApi
-      .publishedEvent(eventId)
-      .then(({ data }) => setEvent(data.event))
-      .catch(() => setError("This event is no longer available."));
-  }, [eventId]);
+    const loadEvent = async () => {
+      try {
+        const { data } = await eventsApi.publishedEvent(eventId);
+        setEvent(data.event);
+      } catch {
+        try {
+          if (!user) throw new Error("Not signed in");
+          const { data } = await eventsApi.organizerEvent(eventId);
+          setEvent(data.event);
+        } catch {
+          setError("This event is no longer available.");
+        }
+      }
+    };
+    loadEvent();
+  }, [eventId, user]);
+
+  const formatTime = (value) => value ? value.slice(0, 5) : "—";
 
   if (!event) {
     return (
@@ -77,7 +90,7 @@ export default function EventDetails() {
                 </p>
 
                 <p className="mt-1 text-sm">
-                  {event.start_time} – {event.end_time}
+                  {formatTime(event.start_time)} – {formatTime(event.end_time)}
                 </p>
               </div>
 
