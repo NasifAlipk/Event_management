@@ -49,13 +49,8 @@ export default function Explore() {
       (!date || event.start_date === date),
   );
 
-  const visibleEvents = [...filteredEvents].sort((first, second) =>
-    sortOrder
-      ? sortOrder === "AZ"
-        ? first.title.localeCompare(second.title)
-        : second.title.localeCompare(first.title)
-      : 0,
-  );
+  const priceOf = (event) => Math.min(Number(event.regular_price || Infinity), Number(event.vip_price || Infinity), Number(event.premium_price || Infinity));
+  const visibleEvents = [...filteredEvents].sort((first, second) => sortOrder === "PRICE_LOW" ? priceOf(first) - priceOf(second) : sortOrder === "PRICE_HIGH" ? priceOf(second) - priceOf(first) : 0);
 
   const pageSize = 8;
   const pageCount = Math.max(
@@ -195,8 +190,8 @@ export default function Explore() {
                     className="appearance-none bg-transparent py-3 pl-4 pr-10 outline-none"
                   >
                     <option value="">Sort by</option>
-                    <option value="AZ">A to Z</option>
-                    <option value="ZA">Z to A</option>
+                    <option value="PRICE_LOW">Low price to high</option>
+                    <option value="PRICE_HIGH">High price to low</option>
                   </select>
 
                   <ChevronDown

@@ -72,6 +72,10 @@ export default function AddCoupon() {
       return "Enter a valid discount value.";
     }
 
+    if (form.discount_type === "AMOUNT" && Number(form.discount_value) >= Number(form.minimum_purchase || 0)) {
+      return "For fixed discounts, the discount value must be less than the minimum purchase amount.";
+    }
+
     const numericFields = [
       "max_discount",
       "minimum_purchase",
