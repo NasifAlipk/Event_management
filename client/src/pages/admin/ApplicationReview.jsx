@@ -25,9 +25,10 @@ const statusClasses = {
   REJECTED: "bg-red-400/15 text-red-300",
 };
 
-const apiOrigin = (
-  import.meta.env.VITE_API_URL || "http://localhost:8000/api"
-).replace(/\/api\/?$/, "");
+const configuredApi = import.meta.env.VITE_API_URL;
+const apiOrigin = configuredApi?.startsWith("http")
+  ? configuredApi.replace(/\/api\/?$/, "")
+  : "http://localhost:8000";
 
 const fileUrl = (path) =>
   path?.startsWith("http") ? path : `${apiOrigin}${path || ""}`;
