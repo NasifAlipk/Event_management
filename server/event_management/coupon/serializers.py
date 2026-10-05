@@ -33,10 +33,13 @@ class CouponSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"discount_value": "Discount value must be greater than 0."})
         if values.get("discount_type") == Coupon.DiscountType.PERCENTAGE and value > 100:
             raise serializers.ValidationError({"discount_value": "Percentage discount cannot exceed 100."})
+        minimum_purchase = Decimal(values.get("minimum_purchase", 0))
+        if values.get("discount_type") == Coupon.DiscountType.AMOUNT and value >= minimum_purchase:
+            raise serializers.ValidationError({"discount_value": "Fixed discount value must be less than the minimum purchase amount."})
         max_discount = values.get("max_discount")
         if max_discount is not None and max_discount != "" and Decimal(max_discount) < 0:
             raise serializers.ValidationError({"max_discount": "Maximum discount cannot be negative."})
-        if Decimal(values.get("minimum_purchase", 0)) < 0 or any(int(values.get(key, 0)) < 0 for key in ("usage_limit_total", "usage_limit_per_user")):
+        if minimum_purchase < 0 or any(int(values.get(key, 0)) < 0 for key in ("usage_limit_total", "usage_limit_per_user")):
             raise serializers.ValidationError({"minimum_purchase": "Amounts and usage limits cannot be negative."})
         if values.get("usage_limit_per_user", 0) and values.get("usage_limit_total", 0) and values["usage_limit_per_user"] > values["usage_limit_total"]:
             raise serializers.ValidationError({"usage_limit_per_user": "Per-user limit cannot exceed the total usage limit."})

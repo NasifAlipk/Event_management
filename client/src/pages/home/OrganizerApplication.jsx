@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowUpRight, Check, FileText, Upload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Header from "../../components/home/Header";
 import { organizerApi } from "../../services/organizer";
+import ConfirmModal from "../../components/ui/ConfirmModal";
 
 const initialForm = {
   full_name: "",
@@ -46,6 +47,7 @@ export default function OrganizerApplication() {
   const [preview, setPreview] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmSubmit, setConfirmSubmit] = useState(false);
 
   const update = (event) => {
     const { name, value, type, checked } = event.target;
@@ -62,9 +64,14 @@ export default function OrganizerApplication() {
     setPreview(file.type.startsWith("image/") ? URL.createObjectURL(file) : "");
   };
 
-  const submit = async (event) => {
+  const submit = (event) => {
     event.preventDefault();
     setError("");
+    setConfirmSubmit(true);
+  };
+
+  const submitApplication = async () => {
+    setConfirmSubmit(false);
     setSubmitting(true);
     const data = new FormData();
     Object.entries(form).forEach(([key, value]) => {
@@ -200,6 +207,16 @@ export default function OrganizerApplication() {
           </form>
         </div>
       </main>
+      {confirmSubmit && (
+        <ConfirmModal
+          title="Submit Organizer Application?"
+          message="Please confirm that all information and identity document details are accurate. Your application will be sent to the admin for review."
+          confirmLabel="Submit application"
+          loading={submitting}
+          onCancel={() => !submitting && setConfirmSubmit(false)}
+          onConfirm={submitApplication}
+        />
+      )}
     </>
   );
 }

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+import re
 
 from .models import OrganizerApplication
 
@@ -33,6 +34,25 @@ class OrganizerApplicationSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "status", "created_at")
 
     def validate(self, attrs):
+        required_fields = (
+            "full_name", "phone_number", "organizer_type", "organization_name",
+            "short_description", "address", "city", "state", "country",
+            "identity_document_type", "identity_document_name", "identity_document_image",
+        )
+        for field in required_fields:
+            value = attrs.get(field)
+            if value is None or (isinstance(value, str) and not value.strip()):
+                raise serializers.ValidationError({field: "This field is required and cannot be blank."})
+        if not re.fullmatch(r"\+?[0-9][0-9\s().-]{6,28}", attrs["phone_number"].strip()):
+            raise serializers.ValidationError({"phone_number": "Enter a valid phone number with 7-30 digits."})
+        if len(attrs["full_name"].strip()) < 3:
+            raise serializers.ValidationError({"full_name": "Full name must be at least 3 characters."})
+        if len(attrs["organization_name"].strip()) < 2:
+            raise serializers.ValidationError({"organization_name": "Organizer or business name must be at least 2 characters."})
+        if len(attrs["short_description"].strip()) < 20:
+            raise serializers.ValidationError({"short_description": "Description must be at least 20 characters."})
+        if len(attrs["identity_document_name"].strip()) < 2:
+            raise serializers.ValidationError({"identity_document_name": "Enter a valid identity document name or number."})
         if not attrs.get("information_accurate"):
             raise serializers.ValidationError(
                 {"information_accurate": "Please confirm that your information is accurate."}
