@@ -89,7 +89,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data['is_active'] = False
         return User.objects.create_user(**validated_data)
 
-# this is for validation
 class LoginSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         username = (attrs.get('username') or '').strip()
