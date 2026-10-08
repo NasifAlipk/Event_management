@@ -12,7 +12,6 @@ const initial = {
   description: "",
   discount_type: "PERCENTAGE",
   discount_value: "",
-  max_discount: "0",
   minimum_purchase: "0",
   start_date: "",
   end_date: "",
@@ -26,7 +25,6 @@ const fields = [
   ["start_date", "Start date"],
   ["end_date", "End date"],
   ["discount_value", "Discount value"],
-  ["max_discount", "Maximum discount"],
   ["minimum_purchase", "Minimum purchase"],
   ["usage_limit_total", "Usage limit (total)"],
   ["usage_limit_per_user", "Usage limit per user"],
@@ -64,6 +62,10 @@ export default function AddCoupon() {
       return "Choose a valid date range.";
     }
 
+    if (form.start_date < new Date().toISOString().slice(0, 10)) {
+      return "Start date cannot be in the past.";
+    }
+
     if (
       Number(form.discount_value) <= 0 ||
       (form.discount_type === "PERCENTAGE" &&
@@ -72,12 +74,15 @@ export default function AddCoupon() {
       return "Enter a valid discount value.";
     }
 
-    if (form.discount_type === "AMOUNT" && Number(form.discount_value) >= Number(form.minimum_purchase || 0)) {
+    if (Number(form.minimum_purchase) <= 0) {
+      return "Minimum purchase must be a positive amount.";
+    }
+
+    if (form.discount_type === "AMOUNT" && Number(form.discount_value) >= Number(form.minimum_purchase)) {
       return "For fixed discounts, the discount value must be less than the minimum purchase amount.";
     }
 
     const numericFields = [
-      "max_discount",
       "minimum_purchase",
       "usage_limit_total",
       "usage_limit_per_user",
@@ -243,7 +248,7 @@ export default function AddCoupon() {
                   </select>
                 </label>
 
-                {fields.slice(4, 7).map(([name, label]) => (
+                {fields.slice(4, 6).map(([name, label]) => (
                   <label
                     key={name}
                     className="text-sm text-slate-300"
@@ -272,7 +277,7 @@ export default function AddCoupon() {
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 {fields
                   .slice(2, 4)
-                  .concat(fields.slice(7))
+                  .concat(fields.slice(6))
                   .map(([name, label]) => (
                     <label
                       key={name}

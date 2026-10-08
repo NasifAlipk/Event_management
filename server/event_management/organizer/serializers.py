@@ -43,8 +43,18 @@ class OrganizerApplicationSerializer(serializers.ModelSerializer):
             value = attrs.get(field)
             if value is None or (isinstance(value, str) and not value.strip()):
                 raise serializers.ValidationError({field: "This field is required and cannot be blank."})
-        if not re.fullmatch(r"\+?[0-9][0-9\s().-]{6,28}", attrs["phone_number"].strip()):
-            raise serializers.ValidationError({"phone_number": "Enter a valid phone number with 7-30 digits."})
+        phone = attrs["phone_number"].strip()
+        if not re.fullmatch(r"[0-9]{10,15}", phone):
+            raise serializers.ValidationError({"phone_number": "Phone number must contain only digits and be 10 to 15 digits long."})
+        alphabetic_fields = {
+            "full_name": "Full name",
+            "city": "City",
+            "state": "State",
+            "country": "Country",
+        }
+        for field, label in alphabetic_fields.items():
+            if not re.fullmatch(r"[A-Za-z]+(?: [A-Za-z]+)*", attrs[field].strip()):
+                raise serializers.ValidationError({field: f"{label} can contain alphabetic characters and spaces only."})
         if len(attrs["full_name"].strip()) < 3:
             raise serializers.ValidationError({"full_name": "Full name must be at least 3 characters."})
         if len(attrs["organization_name"].strip()) < 2:

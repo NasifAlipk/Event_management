@@ -30,7 +30,7 @@ const fields = [
   ["city", "City", "text"],
   ["state", "State", "text"],
   ["country", "Country", "text"],
-  ["identity_document_name", "Identity document name", "text"],
+  ["identity_document_name", "Identity document number", "text"],
 ];
 
 function getError(error) {
