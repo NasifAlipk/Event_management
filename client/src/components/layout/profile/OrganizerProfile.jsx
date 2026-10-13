@@ -1,4 +1,5 @@
 import {
+  LayoutDashboard,
   Ticket,
   LogOut,
   UserRound,
@@ -14,6 +15,7 @@ export default function OrganizerProfileLayout() {
   const location = useLocation();
   const profileActive = location.pathname === "/profile";
   const couponsActive = location.pathname.startsWith("/coupons");
+  const dashboardActive = location.pathname.startsWith("/organizer-dashboard");
 
   const signOut = async () => {
     await logout();
@@ -37,6 +39,14 @@ export default function OrganizerProfileLayout() {
         >
           <UserRound size={16} />
           Profile
+        </Link>
+
+        <Link
+          to="/organizer-dashboard"
+          className={`flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-left ${dashboardActive ? "bg-[#00ff85] text-black" : "text-slate-300 hover:bg-white/10"}`}
+        >
+          <LayoutDashboard size={16} />
+          Dashboard
         </Link>
 
         <Link

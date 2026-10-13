@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/organizer/', include('organizer.urls')),
     path('api/events/', include('event.urls')),
     path('api/coupons/', include('coupon.urls')),
+    path('api/organizer-dashboard/', include('organizerdashboard.urls')),
 ]
 
 if settings.DEBUG:

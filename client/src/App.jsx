@@ -32,6 +32,7 @@ import AddCoupon from "./pages/coupon/AddCoupon.jsx";
 import EditCoupon from "./pages/coupon/EditCoupon.jsx";
 import AdminCoupons from "./pages/admin/Coupons.jsx";
 import AdminCouponDetails from "./pages/admin/CouponDetails.jsx";
+import OrganizerDashboard from "./pages/organizerdashboard/OrganizerDashboard.jsx";
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
           <Route path="/coupons" element={<Coupon />} />
           <Route path="/coupons/add" element={<AddCoupon />} />
           <Route path="/coupons/edit/:couponId" element={<EditCoupon />} />
+          <Route path="/organizer-dashboard" element={<OrganizerDashboard />} />
           <Route path="/profile" element={<GlobalProfile />} />
           <Route path="/apply-organizer" element={<OrganizerApplication />} />
         </Route>
