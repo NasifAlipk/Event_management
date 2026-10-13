@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, CalendarPlus, ImagePlus, Save } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ExploreLayout from "../../components/layout/Explore/Layout";
 import ConfirmModal from "../../components/ui/ConfirmModal";
@@ -62,11 +62,17 @@ export default function EditEvent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [confirm, setConfirm] = useState(false);
+  const [bannerPreview, setBannerPreview] = useState("");
+  const [promotionPreview, setPromotionPreview] = useState("");
 
   useEffect(() => {
     eventsApi
       .organizerEvent(eventId)
-      .then(({ data }) => setForm(data.event))
+      .then(({ data }) => {
+        setForm(data.event);
+        setBannerPreview(data.event.main_banner || "");
+        setPromotionPreview(data.event.promotional_image || "");
+      })
       .catch(() => setError("Unable to load this event."))
       .finally(() => setLoading(false));
   }, [eventId]);
@@ -145,6 +151,15 @@ export default function EditEvent() {
     }
   };
 
+  const selectImage = (name, event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setFiles((current) => ({ ...current, [name]: file }));
+    const preview = URL.createObjectURL(file);
+    if (name === "main_banner") setBannerPreview(preview);
+    else setPromotionPreview(preview);
+  };
+
   const save = async () => {
     setSaving(true);
 
@@ -212,7 +227,13 @@ export default function EditEvent() {
             Back to profile
           </Link>
 
-          <h1 className="mt-6 text-3xl font-light">Edit Event</h1>
+          <div className="mt-6 flex items-center gap-3">
+            <CalendarPlus className="text-[#00ff85]" size={30} />
+            <div>
+              <p className="text-sm uppercase tracking-[.22em] text-[#00ff85]">Organizer workspace</p>
+              <h1 className="mt-1 text-3xl font-light sm:text-4xl">Edit Your Event</h1>
+            </div>
+          </div>
 
           {error && (
             <p className="mt-4 rounded-xl border border-red-400/30 bg-red-400/10 p-3 text-sm text-red-200">
@@ -222,9 +243,11 @@ export default function EditEvent() {
 
           <form
             onSubmit={submit}
-            className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-[#171e25] p-5 sm:grid-cols-2"
+            className="mt-8 grid gap-5 lg:grid-cols-2"
           >
-            {fields.map((name) => (
+            <section className="space-y-5 rounded-2xl border border-white/10 bg-[#171e25] p-5">
+              <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Basic Information</h2>
+              {fields.slice(0, 3).map((name) => (
               <label
                 key={name}
                 className="text-sm text-slate-300"
@@ -249,9 +272,9 @@ export default function EditEvent() {
                   className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60"
                 />
               </label>
-            ))}
+              ))}
 
-            <label className="text-sm text-slate-300 sm:col-span-2">
+            <label className="text-sm text-slate-300">
               Description
 
               <textarea
@@ -263,40 +286,26 @@ export default function EditEvent() {
               />
             </label>
 
-            <div className="grid gap-4 sm:grid-cols-2 sm:col-span-2">
-              {["main_banner", "promotional_image"].map((name) => (
-                <label
-                  key={name}
-                  className="rounded-xl border border-dashed border-[#00ff85]/40 p-4 text-sm text-slate-300"
-                >
-                  {name === "main_banner"
-                    ? "Main banner"
-                    : "Promotional image"}
+              <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Schedule</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {fields.slice(3, 7).map((name) => <label key={name} className="text-sm text-slate-300">{labels[name]}<input name={name} type={name.includes("date") ? "date" : "time"} value={form[name] ?? ""} onChange={change} className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60" /></label>)}
+              </div>
 
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={(e) =>
-                      setFiles((current) => ({
-                        ...current,
-                        [name]: e.target.files?.[0],
-                      }))
-                    }
-                    className="mt-2 block w-full text-xs"
-                  />
-                </label>
-              ))}
-            </div>
+              <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Event Branding</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[["main_banner", "Main event banner", bannerPreview], ["promotional_image", "Promotional image", promotionPreview]].map(([name, label, preview]) => <label key={name} className="flex min-h-36 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#00ff85]/50 bg-[#111820] p-3 text-center text-sm text-slate-300"><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectImage(name, event)} className="sr-only" />{preview ? <img src={preview} alt={label} className="h-24 w-full rounded-lg object-contain" /> : <ImagePlus className="mb-2 text-[#00ff85]" size={24} />}<span className="mt-2">{files[name]?.name || label}</span><span className="text-xs text-slate-500">Click to replace image</span></label>)}
+              </div>
+            </section>
 
-            <textarea
-              name="special_instructions"
-              value={form.special_instructions || ""}
-              onChange={change}
-              placeholder="Special instructions (optional)"
-              className="rounded-lg border border-white/10 bg-[#111820] p-3 text-sm text-white sm:col-span-2"
-            />
+            <section className="space-y-5 rounded-2xl border border-white/10 bg-[#171e25] p-5">
+              <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Venue Details</h2>
+              {fields.slice(7, 13).map((name) => <label key={name} className="text-sm text-slate-300">{labels[name]}<input name={name} type="text" value={form[name] ?? ""} onChange={change} className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60" /></label>)}
+              <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Ticket Details</h2>
+              <div className="grid gap-4 sm:grid-cols-2">{fields.slice(13).map((name) => <label key={name} className="text-sm text-slate-300">{labels[name]}<input name={name} type="number" min="1" value={form[name] ?? ""} onChange={change} className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60" /></label>)}</div>
+              <label className="text-sm text-slate-300">Special instructions<textarea name="special_instructions" value={form.special_instructions || ""} onChange={change} rows="4" className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] p-3 text-sm text-white" /></label>
+            </section>
 
-            <div className="flex justify-end gap-3 sm:col-span-2">
+            <div className="flex justify-end gap-3 lg:col-span-2">
               <Link
                 to="/profile"
                 className="rounded-lg border border-white/15 px-5 py-2.5 text-sm"
