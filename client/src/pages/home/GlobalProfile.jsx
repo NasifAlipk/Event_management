@@ -4,5 +4,5 @@ import OrganizerProfile from "./OrganizerProfile";
 
 export default function GlobalProfile() {
   const { user } = useAuth();
-  return user?.role === "ORGANIZER" ? <OrganizerProfile /> : <UserProfile />;
+  return user?.role === "ORGANIZER" ? (<OrganizerProfile />) : (<UserProfile />);
 }
