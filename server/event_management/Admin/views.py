@@ -23,14 +23,12 @@ class AdminOverviewView(APIView):
     def get(self, request):
         return Response({"users": User.objects.count(), "organizers": User.objects.filter(role=User.Role.ORGANIZER).count(), "admins": User.objects.filter(role=User.Role.ADMIN).count()})
 
-
 class AdminUsersView(APIView):
     permission_classes = (IsAuthenticated, IsAdministrator)
 
     def get(self, request):
         users = User.objects.order_by("-last_login", "-date_joined")
         return Response({"users": UserSerializer(users, many=True).data})
-
 
 class AdminCustomersView(AdminUsersView):
     def get(self, request):

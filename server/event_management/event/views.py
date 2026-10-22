@@ -12,9 +12,6 @@ class PublishedEventsView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        # Approved events are discoverable in Explore. Visibility is retained
-        # for future audience controls but should not hide approved events from
-        # the current explorer workflow.
         events = Event.objects.filter(status=Event.Status.APPROVED)
         return Response({"events": EventSerializer(events, many=True, context={"request": request}).data})
 

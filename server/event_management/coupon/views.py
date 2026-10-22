@@ -2,7 +2,6 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from accounts.permissions import IsAdministrator
 from .models import Coupon
 from .serializers import CouponReviewSerializer, CouponSerializer
@@ -10,7 +9,6 @@ from .serializers import CouponReviewSerializer, CouponSerializer
 
 def organizer_only(request):
     return request.user.role == request.user.Role.ORGANIZER
-
 
 class OrganizerCouponsView(APIView):
     permission_classes = (IsAuthenticated,)
