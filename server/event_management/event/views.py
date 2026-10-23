@@ -2,6 +2,9 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.db.models import Q
+from django.db.models.functions import Least
+from django.core.paginator import Paginator
 
 from accounts.permissions import IsAdministrator
 from .models import Event
@@ -12,8 +15,35 @@ class PublishedEventsView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        events = Event.objects.filter(status=Event.Status.APPROVED)
-        return Response({"events": EventSerializer(events, many=True, context={"request": request}).data})
+        queryset = Event.objects.filter(status=Event.Status.APPROVED)
+        query = request.query_params.get("q", "").strip()
+        category = request.query_params.get("category", "").strip()
+        event_type = request.query_params.get("type", "").strip()
+        event_date = request.query_params.get("date", "").strip()
+        sort = request.query_params.get("sort", "").strip()
+        if query:
+            queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+        if category:
+            queryset = queryset.filter(category__iexact=category)
+        if event_type:
+            queryset = queryset.filter(event_type__iexact=event_type)
+        if event_date:
+            queryset = queryset.filter(start_date=event_date)
+        if sort == "TITLE_AZ":
+            queryset = queryset.order_by("title", "id")
+        elif sort == "TITLE_ZA":
+            queryset = queryset.order_by("-title", "-id")
+        elif sort == "PRICE_LOW":
+            queryset = queryset.annotate(min_ticket_price=Least("regular_price", "vip_price", "premium_price")).order_by("min_ticket_price", "id")
+        elif sort == "PRICE_HIGH":
+            queryset = queryset.annotate(min_ticket_price=Least("regular_price", "vip_price", "premium_price")).order_by("-min_ticket_price", "-id")
+        page_number = max(1, int(request.query_params.get("page", 1) or 1))
+        page_size = min(50, max(1, int(request.query_params.get("page_size", 8) or 8)))
+        paginator = Paginator(queryset, page_size)
+        page = paginator.get_page(page_number)
+        categories = list(Event.objects.filter(status=Event.Status.APPROVED).values_list("category", flat=True).distinct().order_by("category"))
+        types = list(Event.objects.filter(status=Event.Status.APPROVED).values_list("event_type", flat=True).distinct().order_by("event_type"))
+        return Response({"events": EventSerializer(page.object_list, many=True, context={"request": request}).data, "total": paginator.count, "page": page.number, "page_size": page_size, "page_count": paginator.num_pages, "categories": categories, "types": types})
 
 
 class PublishedEventDetailView(APIView):

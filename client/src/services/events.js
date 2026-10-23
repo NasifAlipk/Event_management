@@ -1,7 +1,7 @@
 import api from "./api";
 
 export const eventsApi = {
-  published: () => api.get("/events/published/"),
+  published: (params = {}) => api.get("/events/published/", { params }),
   publishedEvent: (id) => api.get(`/events/published/${id}/`),
   organizer: () => api.get("/events/organizer/"),
   organizerEvent: (id) => api.get(`/events/organizer/${id}/`),
