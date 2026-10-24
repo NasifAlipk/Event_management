@@ -46,8 +46,14 @@ class OrganizerApplicationSerializer(serializers.ModelSerializer):
         phone = attrs["phone_number"].strip()
         if not re.fullmatch(r"[0-9]{10,15}", phone):
             raise serializers.ValidationError({"phone_number": "Phone number must contain only digits and be 10 to 15 digits long."})
+        if phone.startswith("0"):
+            raise serializers.ValidationError({"phone_number": "Phone number cannot start with 0."})
+        if len(set(phone)) == 1 or phone in {"1234567890", "0123456789", "9876543210"}:
+            raise serializers.ValidationError({"phone_number": "Please enter a valid personal phone number; common or repeated numbers are not allowed."})
         alphabetic_fields = {
             "full_name": "Full name",
+            "organization_name": "Organizer / business name",
+            "address": "Address",
             "city": "City",
             "state": "State",
             "country": "Country",
@@ -61,8 +67,10 @@ class OrganizerApplicationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({"organization_name": "Organizer or business name must be at least 2 characters."})
         if len(attrs["short_description"].strip()) < 20:
             raise serializers.ValidationError({"short_description": "Description must be at least 20 characters."})
+        if not re.fullmatch(r"[0-9]+", attrs["identity_document_name"].strip()):
+            raise serializers.ValidationError({"identity_document_name": "Identity document number must contain numbers only."})
         if len(attrs["identity_document_name"].strip()) < 2:
-            raise serializers.ValidationError({"identity_document_name": "Enter a valid identity document name or number."})
+            raise serializers.ValidationError({"identity_document_name": "Enter a valid identity document number."})
         if not attrs.get("information_accurate"):
             raise serializers.ValidationError(
                 {"information_accurate": "Please confirm that your information is accurate."}

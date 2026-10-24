@@ -11,6 +11,7 @@ from .models import Event
 from .serializers import EventReviewSerializer, EventSerializer
 
 
+#Explorer page
 class PublishedEventsView(APIView):
     permission_classes = (IsAuthenticated,)
 
