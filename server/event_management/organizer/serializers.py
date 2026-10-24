@@ -53,6 +53,7 @@ class OrganizerApplicationSerializer(serializers.ModelSerializer):
         alphabetic_fields = {
             "full_name": "Full name",
             "organization_name": "Organizer / business name",
+            
             "address": "Address",
             "city": "City",
             "state": "State",
