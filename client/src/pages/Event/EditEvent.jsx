@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { ArrowLeft, CalendarPlus, ImagePlus, Save } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -55,6 +54,7 @@ const labels = {
 export default function EditEvent() {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  
   const minimumStart = new Date(Date.now() + 12 * 60 * 60 * 1000);
   const minimumStartDate = minimumStart.toISOString().slice(0, 10);
 
@@ -253,62 +253,127 @@ export default function EditEvent() {
           >
             <section className="space-y-5 rounded-2xl border border-white/10 bg-[#171e25] p-5">
               <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Basic Information</h2>
+              
               {fields.slice(0, 3).map((name) => (
-              <label
-                key={name}
-                className="text-sm text-slate-300"
-              >
-                {labels[name]}
+                <label key={name} className="block text-sm text-slate-300">
+                  {labels[name]}
+                  <input
+                    name={name}
+                    type={
+                      name.includes("date")
+                        ? "date"
+                        : name.includes("time")
+                          ? "time"
+                          : ["max_participants", "price", "quantity"].some((part) => name.includes(part))
+                            ? "number"
+                            : "text"
+                    }
+                    value={form[name] ?? ""}
+                    onChange={change}
+                    className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60"
+                  />
+                </label>
+              ))}
 
-                <input
-                  name={name}
-                  type={
-                    name.includes("date")
-                      ? "date"
-                      : name.includes("time")
-                        ? "time"
-                        : ["max_participants", "price", "quantity"].some(
-                              (part) => name.includes(part)
-                            )
-                          ? "number"
-                          : "text"
-                  }
-                  value={form[name] ?? ""}
+              <label className="block text-sm text-slate-300">
+                Description
+                <textarea
+                  name="description"
+                  value={form.description || ""}
                   onChange={change}
+                  rows="4"
                   className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60"
                 />
               </label>
-              ))}
-
-            <label className="text-sm text-slate-300">
-              Description
-
-              <textarea
-                name="description"
-                value={form.description || ""}
-                onChange={change}
-                rows="4"
-                className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60"
-              />
-            </label>
 
               <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Schedule</h2>
               <div className="grid gap-4 sm:grid-cols-2">
-                {fields.slice(3, 7).map((name) => <label key={name} className="text-sm text-slate-300">{labels[name]}<input name={name} type={name.includes("date") ? "date" : "time"} min={name === "start_date" ? minimumStartDate : name === "end_date" ? (form.start_date || minimumStartDate) : undefined} step={name.includes("time") ? "60" : undefined} value={form[name] ?? ""} onChange={change} className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60" /></label>)}
+                {fields.slice(3, 7).map((name) => (
+                  <label key={name} className="block text-sm text-slate-300">
+                    {labels[name]}
+                    <input
+                      name={name}
+                      type={name.includes("date") ? "date" : "time"}
+                      min={name === "start_date" ? minimumStartDate : name === "end_date" ? (form.start_date || minimumStartDate) : undefined}
+                      step={name.includes("time") ? "60" : undefined}
+                      value={form[name] ?? ""}
+                      onChange={change}
+                      className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60"
+                    />
+                  </label>
+                ))}
               </div>
 
               <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Event Branding</h2>
               <div className="grid gap-4 sm:grid-cols-2">
-                {[["main_banner", "Main event banner", bannerPreview], ["promotional_image", "Promotional image", promotionPreview]].map(([name, label, preview]) => <label key={name} className="flex min-h-36 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#00ff85]/50 bg-[#111820] p-3 text-center text-sm text-slate-300"><input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => selectImage(name, event)} className="sr-only" />{preview ? <img src={preview} alt={label} className="h-24 w-full rounded-lg object-contain" /> : <ImagePlus className="mb-2 text-[#00ff85]" size={24} />}<span className="mt-2">{files[name]?.name || label}</span><span className="text-xs text-slate-500">Click to replace image</span></label>)}
+                {[
+                  ["main_banner", "Main event banner", bannerPreview],
+                  ["promotional_image", "Promotional image", promotionPreview],
+                ].map(([name, label, preview]) => (
+                  <label
+                    key={name}
+                    className="flex min-h-36 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border border-dashed border-[#00ff85]/50 bg-[#111820] p-3 text-center text-sm text-slate-300"
+                  >
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(event) => selectImage(name, event)}
+                      className="sr-only"
+                    />
+                    {preview ? (
+                      <img src={preview} alt={label} className="h-24 w-full rounded-lg object-contain" />
+                    ) : (
+                      <ImagePlus className="mb-2 text-[#00ff85]" size={24} />
+                    )}
+                    <span className="mt-2">{files[name]?.name || label}</span>
+                    <span className="text-xs text-slate-500">Click to replace image</span>
+                  </label>
+                ))}
               </div>
             </section>
 
             <section className="space-y-5 rounded-2xl border border-white/10 bg-[#171e25] p-5">
               <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Venue Details</h2>
-              {fields.slice(7, 13).map((name) => <label key={name} className="text-sm text-slate-300">{labels[name]}<input name={name} type="text" value={form[name] ?? ""} onChange={change} className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60" /></label>)}
+              {fields.slice(7, 13).map((name) => (
+                <label key={name} className="block text-sm text-slate-300">
+                  {labels[name]}
+                  <input
+                    name={name}
+                    type="text"
+                    value={form[name] ?? ""}
+                    onChange={change}
+                    className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60"
+                  />
+                </label>
+              ))}
+
               <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Ticket Details</h2>
-              <div className="grid gap-4 sm:grid-cols-2">{fields.slice(13).map((name) => <label key={name} className="text-sm text-slate-300">{labels[name]}<input name={name} type="number" min="1" value={form[name] ?? ""} onChange={change} className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60" /></label>)}</div>
-              <label className="text-sm text-slate-300">Special instructions<textarea name="special_instructions" value={form.special_instructions || ""} onChange={change} rows="4" className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] p-3 text-sm text-white" /></label>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {fields.slice(13).map((name) => (
+                  <label key={name} className="block text-sm text-slate-300">
+                    {labels[name]}
+                    <input
+                      name={name}
+                      type="number"
+                      min="1"
+                      value={form[name] ?? ""}
+                      onChange={change}
+                      className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60"
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <label className="block text-sm text-slate-300">
+                Special instructions
+                <textarea
+                  name="special_instructions"
+                  value={form.special_instructions || ""}
+                  onChange={change}
+                  rows="4"
+                  className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] p-3 text-sm text-white outline-none focus:border-[#00ff85]/60"
+                />
+              </label>
             </section>
 
             <div className="flex justify-end gap-3 lg:col-span-2">
@@ -320,6 +385,7 @@ export default function EditEvent() {
               </Link>
 
               <button
+                type="submit"
                 disabled={saving}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#00ff85] px-5 py-2.5 text-sm font-semibold text-black"
               >
