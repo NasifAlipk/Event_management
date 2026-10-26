@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -5,10 +7,22 @@ from rest_framework.views import APIView
 from django.db.models import Q
 from django.db.models.functions import Least
 from django.core.paginator import Paginator
-
 from accounts.permissions import IsAdministrator
 from .models import Event
 from .serializers import EventReviewSerializer, EventSerializer
+
+
+def event_cancellation_error(event):
+    start_at = timezone.make_aware(
+        datetime.combine(event.start_date, event.start_time),
+        timezone.get_current_timezone(),
+    )
+    remaining = start_at - timezone.now()
+    if remaining <= timedelta(0):
+        return "Events that are running or have already started cannot be cancelled."
+    if remaining < timedelta(hours=12):
+        return "Events can only be cancelled at least 12 hours before their start time."
+    return None
 
 
 #Explorer page
@@ -98,6 +112,9 @@ class OrganizerEventDetailView(APIView):
         if request.data.get("status") == Event.Status.CANCELLED:
             if event.status == Event.Status.CANCELLED:
                 return Response({"detail": "This event is already cancelled."}, status=status.HTTP_400_BAD_REQUEST)
+            cancellation_error = event_cancellation_error(event)
+            if cancellation_error:
+                return Response({"detail": cancellation_error}, status=status.HTTP_400_BAD_REQUEST)
             event.status = Event.Status.CANCELLED
             event.rejection_reason = ""
             event.save(update_fields=("status", "rejection_reason", "updated_at"))
@@ -116,6 +133,9 @@ class OrganizerEventDetailView(APIView):
             return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
         if request.user.role != request.user.Role.ORGANIZER:
             return Response({"detail": "Only organizers can delete events."}, status=status.HTTP_403_FORBIDDEN)
+        cancellation_error = event_cancellation_error(event)
+        if cancellation_error:
+            return Response({"detail": cancellation_error}, status=status.HTTP_400_BAD_REQUEST)
         event.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

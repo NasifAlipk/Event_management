@@ -18,6 +18,9 @@ const formatTime = (value) => value ? value.slice(0, 5) : "—";
 
 function EventCard({ event, onCancel }) {
   const cancelled = event.status === "CANCELLED";
+  const startAt = new Date(`${event.start_date}T${event.start_time || "00:00"}`);
+  const hoursUntilStart = (startAt.getTime() - Date.now()) / (1000 * 60 * 60);
+  const canCancel = !cancelled && Number.isFinite(hoursUntilStart) && hoursUntilStart >= 12;
   return (
     <div
       className={`flex gap-4 rounded-xl border p-3 transition ${cancelled ? "border-red-400/60 bg-red-950/20" : "border-white/10 bg-[#202b3b] hover:border-[#00ff85]/50"}`}
@@ -53,7 +56,7 @@ function EventCard({ event, onCancel }) {
               : event.status}
           </span>
           {!cancelled && <Link to={`/events/edit/${event.id}`} onClick={(click) => click.stopPropagation()} className="rounded-md p-1.5 text-slate-400 hover:bg-white/10 hover:text-[#00ff85]" title="Edit event"><Edit3 size={15} /></Link>}
-          {!cancelled && <button type="button" onClick={(click) => { click.preventDefault(); click.stopPropagation(); onCancel(event); }} className="rounded-md px-2 py-1.5 text-xs text-red-300 hover:bg-red-400/10" title="Cancel event">Cancel</button>}
+          {canCancel && <button type="button" onClick={(click) => { click.preventDefault(); click.stopPropagation(); onCancel(event); }} className="rounded-md px-2 py-1.5 text-xs text-red-300 hover:bg-red-400/10" title="Cancel event">Cancel</button>}
           </div>
         </div>
 
@@ -77,6 +80,11 @@ function EventCard({ event, onCancel }) {
             {event.venue_name}, {event.city}
           </span>
         </div>
+        {!cancelled && !canCancel && (
+          <p className="mt-2 text-[11px] text-amber-300">
+            {hoursUntilStart <= 0 ? "This event is running or has already started." : "Cancellation is unavailable within 12 hours of the start time."}
+          </p>
+        )}
       </div>
     </div>
   );

@@ -55,6 +55,8 @@ const labels = {
 export default function EditEvent() {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const minimumStart = new Date(Date.now() + 12 * 60 * 60 * 1000);
+  const minimumStartDate = minimumStart.toISOString().slice(0, 10);
 
   const [form, setForm] = useState({});
   const [files, setFiles] = useState({});
@@ -109,8 +111,8 @@ export default function EditEvent() {
       return "Description must be at least 20 characters.";
     }
 
-    if (Number.isNaN(start.getTime()) || start <= new Date()) {
-      return "The event start must be in the future.";
+    if (Number.isNaN(start.getTime()) || start <= new Date(Date.now() + 12 * 60 * 60 * 1000)) {
+      return "Events must be scheduled at least 12 hours from now.";
     }
 
     if (end <= start) {
@@ -135,6 +137,10 @@ export default function EditEvent() {
       ].some((key) => Number(form[key]) <= 0)
     ) {
       return "Every ticket price and quantity must be greater than 0.";
+    }
+
+    if (!(Number(form.regular_price) < Number(form.vip_price) && Number(form.vip_price) < Number(form.premium_price))) {
+      return "Ticket prices must increase in this order: Regular < VIP < Premium.";
     }
 
     return "";
@@ -288,7 +294,7 @@ export default function EditEvent() {
 
               <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Schedule</h2>
               <div className="grid gap-4 sm:grid-cols-2">
-                {fields.slice(3, 7).map((name) => <label key={name} className="text-sm text-slate-300">{labels[name]}<input name={name} type={name.includes("date") ? "date" : "time"} value={form[name] ?? ""} onChange={change} className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60" /></label>)}
+                {fields.slice(3, 7).map((name) => <label key={name} className="text-sm text-slate-300">{labels[name]}<input name={name} type={name.includes("date") ? "date" : "time"} min={name === "start_date" ? minimumStartDate : name === "end_date" ? (form.start_date || minimumStartDate) : undefined} step={name.includes("time") ? "60" : undefined} value={form[name] ?? ""} onChange={change} className="mt-1.5 w-full rounded-lg border border-white/10 bg-[#111820] px-3 py-2.5 text-sm text-white outline-none focus:border-[#00ff85]/60" /></label>)}
               </div>
 
               <h2 className="border-l-4 border-[#00ff85] pl-3 text-lg font-semibold">Event Branding</h2>

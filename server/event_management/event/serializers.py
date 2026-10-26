@@ -1,8 +1,6 @@
-from datetime import datetime
-
+from datetime import datetime, timedelta
 from rest_framework import serializers
 from django.utils import timezone
-
 from .models import Event
 
 #Event adding validation
@@ -22,8 +20,8 @@ class EventSerializer(serializers.ModelSerializer):
         start = datetime.combine(values["start_date"], values["start_time"])
         end = datetime.combine(values["end_date"], values["end_time"])
         now = timezone.localtime().replace(tzinfo=None)
-        if start <= now:
-            raise serializers.ValidationError({"start_date": "Event start must be in the future."})
+        if start <= now + timedelta(hours=12):
+            raise serializers.ValidationError({"start_date": "Events must be scheduled at least 12 hours from now."})
         if end <= start:
             raise serializers.ValidationError({"end_date": "End date and time must be after the start date and time."})
         for field in ("title", "event_type", "category", "venue_name", "address", "city", "state", "country", "pin_code"):

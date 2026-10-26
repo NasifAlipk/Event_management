@@ -43,6 +43,7 @@ function Input({
   type = "text",
   required = true,
   min,
+  step,
 }) {
   return (
     <label className="text-sm text-slate-300">
@@ -54,6 +55,7 @@ function Input({
         type={type}
         required={required}
         min={min}
+        step={step}
         value={form[name]}
         onChange={(event) =>
           setForm((current) => ({
@@ -105,6 +107,8 @@ function FileInput({
 
 export default function AddEvent() {
   const navigate = useNavigate();
+  const minimumStart = new Date(Date.now() + 12 * 60 * 60 * 1000);
+  const minimumStartDate = minimumStart.toISOString().slice(0, 10);
 
   const [form, setForm] = useState(initial);
   const [error, setError] = useState("");
@@ -127,12 +131,13 @@ export default function AddEvent() {
     if (form.title.trim().length < 3) return "Event title must be at least 3 characters.";
     if (form.description.trim().length < 20) return "Description must be at least 20 characters.";
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "Please provide a valid event schedule.";
-    if (start <= new Date()) return "The event start date and time must be in the future.";
+    if (start <= new Date(Date.now() + 12 * 60 * 60 * 1000)) return "Events must be scheduled at least 12 hours from now.";
     if (end <= start) return "The end date and time must be after the start date and time.";
     if (Number(form.max_participants) < 1) return "Maximum participants must be at least 1.";
     if (totalTickets < 1) return "Add at least one available ticket.";
     if (totalTickets !== Number(form.max_participants)) return "Maximum participants must exactly match the total ticket quantities.";
     if (["regular_price", "vip_price", "premium_price", "regular_quantity", "vip_quantity", "premium_quantity"].some((key) => Number(form[key] || 0) <= 0)) return "Every ticket price and quantity must be greater than 0.";
+    if (!(Number(form.regular_price) < Number(form.vip_price) && Number(form.vip_price) < Number(form.premium_price))) return "Ticket prices must increase in this order: Regular < VIP < Premium.";
     return "";
   };
 
@@ -266,7 +271,7 @@ export default function AddEvent() {
                   label="Start date"
                   name="start_date"
                   type="date"
-                  min={new Date().toISOString().slice(0, 10)}
+                  min={minimumStartDate}
                   form={form}
                   setForm={setForm}
                 />
@@ -275,6 +280,7 @@ export default function AddEvent() {
                   label="Start time"
                   name="start_time"
                   type="time"
+                  step="60"
                   form={form}
                   setForm={setForm}
                 />
@@ -283,7 +289,7 @@ export default function AddEvent() {
                   label="End date"
                   name="end_date"
                   type="date"
-                  min={form.start_date || new Date().toISOString().slice(0, 10)}
+                  min={form.start_date || minimumStartDate}
                   form={form}
                   setForm={setForm}
                 />
@@ -292,6 +298,7 @@ export default function AddEvent() {
                   label="End time"
                   name="end_time"
                   type="time"
+                  step="60"
                   form={form}
                   setForm={setForm}
                 />
