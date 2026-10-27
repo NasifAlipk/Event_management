@@ -112,9 +112,7 @@ CORS_ALLOWED_ORIGINS = os.getenv(
     'CORS_ALLOWED_ORIGINS',
     'http://localhost:5173,https://shaded-alkalize-posh.ngrok-free.dev'
 ).split(',')
-
 CORS_ALLOW_CREDENTIALS = True
-
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
@@ -123,8 +121,6 @@ CSRF_TRUSTED_ORIGINS = [
     ).split(',')
     if origin.strip()
 ]
-
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {

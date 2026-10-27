@@ -1,11 +1,9 @@
-from datetime import datetime
-
+from datetime import datetime, timedelta
 from rest_framework import serializers
 from django.utils import timezone
-
 from .models import Event
 
-
+#Event adding validation
 class EventSerializer(serializers.ModelSerializer):
     organizer_name = serializers.CharField(source="organizer.username", read_only=True)
 
@@ -15,8 +13,6 @@ class EventSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "organizer", "status", "rejection_reason", "created_at", "updated_at", "organizer_name")
 
     def validate(self, attrs):
-        # PATCH requests may omit fields. Validate the complete prospective
-        # event by merging submitted values with the existing instance.
         values = {}
         if self.instance is not None:
             values = {field.name: getattr(self.instance, field.name) for field in Event._meta.fields}
@@ -24,8 +20,8 @@ class EventSerializer(serializers.ModelSerializer):
         start = datetime.combine(values["start_date"], values["start_time"])
         end = datetime.combine(values["end_date"], values["end_time"])
         now = timezone.localtime().replace(tzinfo=None)
-        if start <= now:
-            raise serializers.ValidationError({"start_date": "Event start must be in the future."})
+        if start <= now + timedelta(hours=12):
+            raise serializers.ValidationError({"start_date": "Events must be scheduled at least 12 hours from now."})
         if end <= start:
             raise serializers.ValidationError({"end_date": "End date and time must be after the start date and time."})
         for field in ("title", "event_type", "category", "venue_name", "address", "city", "state", "country", "pin_code"):
@@ -41,6 +37,13 @@ class EventSerializer(serializers.ModelSerializer):
         price_fields = ("regular_price", "vip_price", "premium_price")
         if any(values.get(field, 0) <= 0 for field in (*quantity_fields, *price_fields)):
             raise serializers.ValidationError({"regular_price": "Every ticket price and quantity must be greater than 0."})
+        regular_price = values["regular_price"]
+        vip_price = values["vip_price"]
+        premium_price = values["premium_price"]
+        if not regular_price < vip_price < premium_price:
+            raise serializers.ValidationError({
+                "premium_price": "Ticket prices must increase in this order: Regular < VIP < Premium."
+            })
         total_quantity = sum(values.get(field, 0) for field in quantity_fields)
         if total_quantity < 1:
             raise serializers.ValidationError({"regular_quantity": "At least one ticket must be available."})

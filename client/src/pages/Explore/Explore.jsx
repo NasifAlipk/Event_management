@@ -22,52 +22,28 @@ export default function Explore() {
   const [type, setType] = useState("");
   const [date, setDate] = useState("");
   const [sortOrder, setSortOrder] = useState("");
+  const [appliedQuery, setAppliedQuery] = useState("");
+  const [pageCount, setPageCount] = useState(1);
   const [page, setPage] = useState(1);
 
   const isOrganizer = user?.role === "ORGANIZER";
 
   useEffect(() => {
+    setLoading(true);
     eventsApi
-      .published()
-      .then(({ data }) => setEvents(data.events || []))
+      .published({ q: appliedQuery, category, type, date, sort: sortOrder, page, page_size: 8 })
+      .then(({ data }) => {
+        setEvents(data.events || []);
+        setPageCount(data.page_count || 1);
+        if (data.categories) setCategories(data.categories);
+        if (data.types) setTypes(data.types);
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [appliedQuery, category, type, date, sortOrder, page]);
 
-  const categories = [
-    ...new Set(events.map((event) => event.category).filter(Boolean)),
-  ];
-
-  const types = [
-    ...new Set(events.map((event) => event.event_type).filter(Boolean)),
-  ];
-
-  const filteredEvents = events.filter(
-    (event) =>
-      event.title.toLowerCase().includes(query.toLowerCase()) &&
-      (!category || event.category === category) &&
-      (!type || event.event_type === type) &&
-      (!date || event.start_date === date),
-  );
-
-  const priceOf = (event) => Math.min(Number(event.regular_price || Infinity), Number(event.vip_price || Infinity), Number(event.premium_price || Infinity));
-  const visibleEvents = [...filteredEvents].sort((first, second) => {
-    if (sortOrder === "TITLE_AZ") return first.title.localeCompare(second.title);
-    if (sortOrder === "TITLE_ZA") return second.title.localeCompare(first.title);
-    if (sortOrder === "PRICE_LOW") return priceOf(first) - priceOf(second);
-    if (sortOrder === "PRICE_HIGH") return priceOf(second) - priceOf(first);
-    return 0;
-  });
-
-  const pageSize = 8;
-  const pageCount = Math.max(
-    1,
-    Math.ceil(visibleEvents.length / pageSize),
-  );
-
-  const paginatedEvents = visibleEvents.slice(
-    (page - 1) * pageSize,
-    page * pageSize,
-  );
+  const [categories, setCategories] = useState([]);
+  const [types, setTypes] = useState([]);
+  const paginatedEvents = events;
 
   return (
     <ExploreLayout>
@@ -116,7 +92,6 @@ export default function Explore() {
                   value={query}
                   onChange={(event) => {
                     setQuery(event.target.value);
-                    setPage(1);
                   }}
                   placeholder="Search events..."
                   className="w-full bg-transparent py-3 text-sm text-white outline-none placeholder:text-slate-600"
@@ -125,6 +100,7 @@ export default function Explore() {
 
               <button
                 type="button"
+                onClick={() => { setAppliedQuery(query.trim()); setPage(1); }}
                 className="rounded-xl bg-[#00ff85] px-6 py-3 text-sm font-semibold text-black transition hover:bg-[#00d970]"
               >
                 Search
@@ -232,7 +208,7 @@ export default function Explore() {
               <div className="grid min-h-80 place-items-center rounded-2xl border border-dashed border-white/10 text-slate-400">
                 Loading events...
               </div>
-            ) : visibleEvents.length === 0 ? (
+            ) : events.length === 0 ? (
               <div className="grid min-h-80 place-items-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-10 text-center">
                 <div>
                   <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#00ff85]/10 text-[#00ff85]">
@@ -248,9 +224,9 @@ export default function Explore() {
                     Check back soon for new Eventora experiences.
                   </p>
 
-                  {query && (
+                  {appliedQuery && (
                     <p className="mt-3 text-xs text-slate-500">
-                      No results for &quot;{query}&quot;.
+                      No results for &quot;{appliedQuery}&quot;.
                     </p>
                   )}
                 </div>
@@ -292,7 +268,7 @@ export default function Explore() {
             )}
           </section>
 
-          {!loading && visibleEvents.length > pageSize && (
+          {!loading && pageCount > 1 && (
             <div className="mt-6 flex items-center justify-center gap-2">
               <button
                 type="button"
