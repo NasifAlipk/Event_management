@@ -17,6 +17,8 @@ import ExploreLayout from "../../components/layout/Explore/Layout";
 import { useAuth } from "../../hooks/useAuth";
 import { eventsApi } from "../../services/events";
 
+
+// This is the Ticket styling part
 const TICKET_STYLES = {
   regular: {
     label: "Regular",
