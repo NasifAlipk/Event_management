@@ -1,4 +1,11 @@
-import { Bell, Compass, LogOut, MessageCircle, UserRound } from "lucide-react";
+import {
+  Bell,
+  Compass,
+  LayoutDashboard,
+  LogOut,
+  MessageCircle,
+  UserRound,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import Eventoraslip from "../../assets/images/Eventoraslip.png";
@@ -35,6 +42,22 @@ export default function Header() {
           <Link to="/events" className="hover:text-[#00ff85]">
             <Compass className="mr-1 inline" size={16} /> Explore
           </Link>
+          {user && (
+            <>
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center gap-1 hover:text-[#00ff85]"
+              >
+                <LayoutDashboard size={16} /> Dashboard
+              </Link>
+              <Link
+                to="/profile"
+                className="inline-flex items-center gap-1 hover:text-[#00ff85]"
+              >
+                <UserRound size={16} /> Profile
+              </Link>
+            </>
+          )}
         </nav>
         <div className="flex items-center gap-3">
           {user ? (
