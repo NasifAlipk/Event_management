@@ -4,7 +4,7 @@ import { adminRoutes } from "./routes/admin/AdminRoutes.jsx";
 import { authRoutes } from "./routes/auth/AuthRoutes.jsx";
 import { userRoutes } from "./routes/user/UserRoutes.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
-import PublicHome from "./pages/home/PublicHome.jsx";
+import { Navigate } from "react-router-dom";
 
 export default function App() {
   return (
@@ -12,7 +12,7 @@ export default function App() {
       {authRoutes}
       {adminRoutes}
       {userRoutes}
-      <Route path="/" element={<PublicHome />} />
+      <Route path="/" element={<Navigate to="/home" replace />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

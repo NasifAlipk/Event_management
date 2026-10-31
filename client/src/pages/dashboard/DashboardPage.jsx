@@ -7,7 +7,7 @@ export default function DashboardPage() {
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
       <p className="text-sm text-slate-500">
-        Welcome back,
+        Welcome back
       </p>
 
       <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-900">

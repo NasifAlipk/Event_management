@@ -25,7 +25,7 @@ export default function Header() {
     <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-[#171425]/80 px-4 py-2 backdrop-blur-md sm:px-8">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <Link
-          to={user ? "/dashboard" : "/"}
+          to="/home"
           className="flex items-center gap-2 text-lg font-semibold text-white"
         >
           <img
@@ -36,7 +36,7 @@ export default function Header() {
           <span>Eventora</span>
         </Link>
         <nav className="hidden items-center gap-7 rounded-full border border-white/15 bg-black/20 px-6 py-2 text-sm text-white/85 md:flex">
-          <Link to={user ? "/dashboard" : "/"} className="hover:text-[#00ff85]">
+          <Link to="/home" className="hover:text-[#00ff85]">
             Home
           </Link>
           <Link to="/events" className="hover:text-[#00ff85]">
