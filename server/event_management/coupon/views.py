@@ -2,7 +2,6 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.utils import timezone
 from accounts.permissions import IsAdministrator
 from .models import Coupon
 from .serializers import CouponReviewSerializer, CouponSerializer
@@ -11,25 +10,6 @@ from .serializers import CouponReviewSerializer, CouponSerializer
 def organizer_only(request):
     return request.user.role == request.user.Role.ORGANIZER
 
-
-class AvailableCouponView(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def get(self, request):
-        code = (request.query_params.get("code") or "").strip().upper()
-        if not code:
-            return Response({"detail": "Enter a coupon code."}, status=status.HTTP_400_BAD_REQUEST)
-        today = timezone.localdate()
-        try:
-            coupon = Coupon.objects.get(
-                code=code,
-                status=Coupon.Status.APPROVED,
-                start_date__lte=today,
-                end_date__gte=today,
-            )
-        except Coupon.DoesNotExist:
-            return Response({"detail": "This coupon is invalid, expired, or unavailable."}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({"coupon": CouponSerializer(coupon).data})
 
 class OrganizerCouponsView(APIView):
     permission_classes = (IsAuthenticated,)

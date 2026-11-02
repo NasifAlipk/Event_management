@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     'event',
     'coupon',
     'organizerdashboard',
+    'checkout',
+    'paymentmethod',
 ]
 
 MIDDLEWARE = [
