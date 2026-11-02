@@ -11,7 +11,7 @@ import {
   Ticket, 
   Users 
 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import ExploreLayout from "../../components/layout/Explore/Layout";
 import { useAuth } from "../../hooks/useAuth";
@@ -115,6 +115,7 @@ function TicketCard({ type, price, available, quantity, onChange }) {
 
 export default function Checkout() {
   const { eventId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [event, setEvent] = useState(null);
   const [error, setError] = useState("");
@@ -231,6 +232,7 @@ export default function Checkout() {
             <button 
               type="button" 
               disabled={!count} 
+              onClick={() => navigate(`/booking/payment/${event.id}`, { state: { quantities } })}
               className="inline-flex items-center gap-3 rounded-lg bg-[#00e692] px-8 py-3 font-semibold text-[#03110c] transition hover:bg-[#00f5a0] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Continue to Payment <ArrowRight size={19} />

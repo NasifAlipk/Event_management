@@ -4,6 +4,7 @@ import ProtectedRoute from "../../components/auth/ProtectedRoute.jsx";
 import DashboardLayout from "../../layouts/DashboardLayout.jsx";
 import Dashboard from "../../pages/dashboard/Dashboard.jsx";
 import Checkout from "../../pages/booking/Checkout.jsx";
+import PaymentMethod from "../../pages/booking/PaymentMethod.jsx";
 import AddCoupon from "../../pages/coupon/AddCoupon.jsx";
 import Coupon from "../../pages/coupon/Coupon.jsx";
 import EditCoupon from "../../pages/coupon/EditCoupon.jsx";
@@ -23,6 +24,7 @@ export const userRoutes = [
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/booking/checkout/:eventId" element={<Checkout />} />
+        <Route path="/booking/payment/:eventId" element={<PaymentMethod />} />
         <Route path="/events" element={<Explore />} />
         <Route path="/events/add" element={<AddEvent />} />
         <Route path="/events/edit/:eventId" element={<EditEvent />} />

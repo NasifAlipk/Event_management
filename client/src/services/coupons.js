@@ -1,6 +1,7 @@
 import api from "./api";
 
 export const couponsApi = {
+  available: (code) => api.get("/coupons/available/", { params: { code } }),
   organizer: () => api.get("/coupons/organizer/"),
   organizerCoupon: (id) => api.get(`/coupons/organizer/${id}/`),
   create: (data) => api.post("/coupons/organizer/", data),
