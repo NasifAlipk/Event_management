@@ -3,6 +3,7 @@ import api from "./api";
 export const eventsApi = {
   published: (params = {}) => api.get("/events/published/", { params }),
   publishedEvent: (id) => api.get(`/events/published/${id}/`),
+  participated: () => api.get("/events/participated/"),
   organizer: () => api.get("/events/organizer/"),
   organizerEvent: (id) => api.get(`/events/organizer/${id}/`),
   create: (data) => api.post("/events/organizer/", data),

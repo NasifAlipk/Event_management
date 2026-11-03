@@ -79,7 +79,7 @@ export default function OrganizerApplication() {
     });
     try {
       await organizerApi.submitApplication(data);
-      navigate("/dashboard", {
+      navigate("/home", {
         replace: true,
         state: { message: "Your organizer application was submitted successfully." },
       });
@@ -96,7 +96,7 @@ export default function OrganizerApplication() {
       <main className="min-h-screen bg-[#111820] px-4 pb-16 pt-24 text-white sm:px-8">
         <div className="mx-auto max-w-5xl">
           <Link
-            to="/dashboard"
+            to="/home"
             className="inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-[#00ff85]"
           >
             <ArrowLeft size={16} /> Back to home

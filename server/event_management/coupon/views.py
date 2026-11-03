@@ -10,6 +10,7 @@ from .serializers import CouponReviewSerializer, CouponSerializer
 def organizer_only(request):
     return request.user.role == request.user.Role.ORGANIZER
 
+
 class OrganizerCouponsView(APIView):
     permission_classes = (IsAuthenticated,)
 

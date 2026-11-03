@@ -14,7 +14,7 @@ export default function AuthLayout() {
   }
 
   return user ? (
-    <Navigate to="/dashboard" replace />
+    <Navigate to="/home" replace />
   ) : (
     <main className="grid min-h-screen place-items-center bg-gradient-to-br from-[#1a1744] via-[#1a1728] to-[#1a2826] p-5">
       <Outlet />

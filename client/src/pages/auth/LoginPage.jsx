@@ -27,7 +27,7 @@ export default function LoginPage() {
     try {
       await login(form);
 
-      const redirectPath = location.state?.from?.pathname || "/dashboard";
+      const redirectPath = location.state?.from?.pathname || "/home";
 
       navigate(redirectPath, {
         replace: true,
@@ -111,7 +111,7 @@ export default function LoginPage() {
         </form>
 
         <div className="my-5 flex items-center gap-3 text-xs text-gray-500"><span className="h-px flex-1 bg-gray-700" />OR<span className="h-px flex-1 bg-gray-700" /></div>
-        <GoogleButton onError={handleGoogleError} onSuccess={() => navigate(location.state?.from?.pathname || "/dashboard", { replace: true })} />
+        <GoogleButton onError={handleGoogleError} onSuccess={() => navigate(location.state?.from?.pathname || "/home", { replace: true })} />
 
         <p className="mt-6 text-center text-sm text-gray-400">
           New to Eventora?{" "}

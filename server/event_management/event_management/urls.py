@@ -12,6 +12,8 @@ urlpatterns = [
     path('api/events/', include('event.urls')),
     path('api/coupons/', include('coupon.urls')),
     path('api/organizer-dashboard/', include('organizerdashboard.urls')),
+    path('api/checkout/', include('checkout.urls')),
+    path('api/payment-methods/', include('paymentmethod.urls')),
 ]
 
 if settings.DEBUG:

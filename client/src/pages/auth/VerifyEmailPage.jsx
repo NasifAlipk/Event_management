@@ -34,7 +34,7 @@ export default function VerifyEmailPage() {
 
     try {
       await verifyEmail(form);
-      navigate("/dashboard", { replace: true });
+      navigate("/home", { replace: true });
     } catch (err) {
       setError(err.response?.data?.detail || "Could not verify this code.");
     } finally {

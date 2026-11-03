@@ -12,6 +12,6 @@ export default function AdminProtectedRoute() {
     );
   if (!user)
     return <Navigate to="/admin/login" replace state={{ from: location }} />;
-  if (user.role !== "ADMIN") return <Navigate to="/dashboard" replace />;
+  if (user.role !== "ADMIN") return <Navigate to="/home" replace />;
   return <Outlet />;
 }

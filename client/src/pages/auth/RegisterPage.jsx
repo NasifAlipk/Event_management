@@ -154,7 +154,7 @@ export default function RegisterPage() {
         </form>
 
         <div className="my-5 flex items-center gap-3 text-xs text-gray-500"><span className="h-px flex-1 bg-gray-700" />OR<span className="h-px flex-1 bg-gray-700" /></div>
-        <GoogleButton onError={setError} onSuccess={() => navigate("/dashboard", { replace: true })} />
+        <GoogleButton onError={setError} onSuccess={() => navigate("/home", { replace: true })} />
 
         <div className="mt-6 text-center text-sm text-gray-400">
           We will send a verification code to your email.
