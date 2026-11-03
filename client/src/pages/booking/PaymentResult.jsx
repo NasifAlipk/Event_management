@@ -1,0 +1,32 @@
+import { useEffect, useState } from "react";
+import { CheckCircle2, Clock3, XCircle } from "lucide-react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+
+import ExploreLayout from "../../components/layout/Explore/Layout";
+import { checkoutApi } from "../../services/checkout";
+
+export default function PaymentResult() {
+  const location = useLocation();
+  const [params] = useSearchParams();
+  const [status, setStatus] = useState(location.pathname.endsWith("cancelled") ? "CANCELLED" : "PENDING");
+  const sessionId = params.get("session_id");
+
+  useEffect(() => {
+    if (!sessionId || status === "CANCELLED") return undefined;
+    let active = true;
+    checkoutApi.stripeSessionStatus(sessionId).then(({ data }) => {
+      if (active) setStatus(data.status);
+    }).catch(() => {
+      if (active) setStatus("FAILED");
+    });
+    return () => { active = false; };
+  }, [sessionId, status]);
+
+  const successful = status === "PAID";
+  const cancelled = status === "CANCELLED" || status === "FAILED";
+  const Icon = successful ? CheckCircle2 : cancelled ? XCircle : Clock3;
+  const title = successful ? "Payment successful" : cancelled ? "Payment not completed" : "Confirming your payment";
+  const message = successful ? "Your Stripe test payment was verified. Your ticket booking is complete." : cancelled ? "The payment was cancelled or could not be completed. No ticket was booked." : "Stripe has returned successfully. We are waiting for the secure webhook confirmation.";
+
+  return <ExploreLayout><main className="grid min-h-screen place-items-center bg-[#081014] px-5 pt-20 text-white"><section className="w-full max-w-lg rounded-2xl border border-[#00f5a0]/30 bg-[#0c1b1c] p-8 text-center"><Icon className={`mx-auto ${successful ? "text-[#00f5a0]" : cancelled ? "text-red-300" : "text-amber-300"}`} size={54} /><h1 className="mt-5 text-3xl font-semibold">{title}</h1><p className="mt-3 leading-7 text-slate-300">{message}</p><Link to="/events" className="mt-7 inline-flex rounded-xl bg-[#00e692] px-6 py-3 font-semibold text-[#03110c]">Back to Events</Link></section></main></ExploreLayout>;
+}

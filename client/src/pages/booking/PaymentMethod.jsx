@@ -100,9 +100,29 @@ export default function PaymentMethod() {
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [notice, setNotice] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("WALLET");
+  const [paymentMethod, setPaymentMethod] = useState("STRIPE");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState("");
+  const [creatingSession, setCreatingSession] = useState(false);
+
+  const startStripeCheckout = async () => {
+    if (paymentMethod !== "STRIPE") {
+      setNotice("Select Stripe to continue with test checkout.");
+      return;
+    }
+    setCreatingSession(true);
+    try {
+      const { data } = await checkoutApi.createStripeSession({
+        event_id: eventId,
+        ...quantities,
+        coupon: couponCode,
+      });
+      window.location.assign(data.checkout_url);
+    } catch (requestError) {
+      setCouponError(requestError.response?.data?.detail || "Unable to start Stripe Checkout.");
+      setCreatingSession(false);
+    }
+  };
 
   const quote = async (code = "") => {
     const { data } = await checkoutApi.quote(eventId, { ...quantities, coupon: code });
@@ -341,12 +361,13 @@ export default function PaymentMethod() {
               <span className="text-2xl font-semibold text-[#00f5a0]">{money(pricing.total)}</span>
             </div>
 
-            <button 
-              type="button" 
-              onClick={() => setNotice("Payment processing will be connected soon.")} 
-              className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#00e692] px-5 py-4 font-semibold text-[#03110c] hover:bg-[#00f5a0]"
+            <button
+              type="button"
+              disabled={creatingSession}
+              onClick={startStripeCheckout}
+              className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#00e692] px-5 py-4 font-semibold text-[#03110c] hover:bg-[#00f5a0] disabled:cursor-wait disabled:opacity-60"
             >
-              <LockKeyhole size={20} />Proceed to Pay <ArrowRight size={19} />
+              <LockKeyhole size={20} />{creatingSession ? "Opening Stripe..." : "Proceed to Pay"} <ArrowRight size={19} />
             </button>
             
             <button 
