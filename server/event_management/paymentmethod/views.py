@@ -96,6 +96,15 @@ def _has_capacity(order):
     return all((paid[ticket] or 0) + getattr(order, f"{ticket}_quantity") <= getattr(order.event, f"{ticket}_quantity") for ticket in ("regular", "vip", "premium"))
 
 
+def _stripe_data(value):
+    """Return Stripe SDK objects as plain dictionaries before reading nested data."""
+    if hasattr(value, "to_dict"):
+        return value.to_dict()
+    if isinstance(value, dict):
+        return value
+    return {}
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class StripeWebhookView(APIView):
     authentication_classes = ()
@@ -107,8 +116,19 @@ class StripeWebhookView(APIView):
             event = stripe.Webhook.construct_event(request.body, signature, settings.STRIPE_WEBHOOK_SECRET)
         except (ValueError, stripe.error.SignatureVerificationError):
             return HttpResponse("Invalid webhook", status=400)
-        event_type = event["type"]
-        session = event["data"]["object"]
+        payload = _stripe_data(event)
+        event_type = payload.get("type")
+        # Only Checkout Session lifecycle events can change a CheckoutOrder.
+        # Other Stripe events (for example charge.succeeded) are acknowledged.
+        handled_events = {
+            "checkout.session.completed",
+            "checkout.session.expired",
+            "checkout.session.async_payment_failed",
+        }
+        if event_type not in handled_events:
+            return HttpResponse(status=200)
+
+        session = _stripe_data((payload.get("data") or {}).get("object"))
         order_id = (session.get("metadata") or {}).get("order_id")
         if not order_id:
             return HttpResponse(status=200)

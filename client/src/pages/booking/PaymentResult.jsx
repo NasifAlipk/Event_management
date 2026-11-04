@@ -14,12 +14,24 @@ export default function PaymentResult() {
   useEffect(() => {
     if (!sessionId || status === "CANCELLED") return undefined;
     let active = true;
-    checkoutApi.stripeSessionStatus(sessionId).then(({ data }) => {
-      if (active) setStatus(data.status);
-    }).catch(() => {
-      if (active) setStatus("FAILED");
-    });
-    return () => { active = false; };
+    let timer;
+
+    const poll = async () => {
+      try {
+        const { data } = await checkoutApi.stripeSessionStatus(sessionId);
+        if (!active) return;
+        setStatus((current) => current === data.status ? current : data.status);
+        if (data.status === "PENDING") timer = window.setTimeout(poll, 2000);
+      } catch {
+        if (active) setStatus("FAILED");
+      }
+    };
+
+    poll();
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
   }, [sessionId, status]);
 
   const successful = status === "PAID";
