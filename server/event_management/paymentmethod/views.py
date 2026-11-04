@@ -39,6 +39,8 @@ class CreateStripeCheckoutSessionView(APIView):
         event = Event.objects.filter(pk=values["event_id"], status=Event.Status.APPROVED).select_related("organizer").first()
         if event is None:
             return Response({"detail": "This event is not available for checkout."}, status=status.HTTP_404_NOT_FOUND)
+        if event.start_date < timezone.localdate():
+            return Response({"detail": "Booking is unavailable because this event has completed."}, status=status.HTTP_400_BAD_REQUEST)
         quote_serializer = CheckoutQuoteSerializer(data=values)
         quote_serializer.is_valid(raise_exception=True)
         quantities = {key: quote_serializer.validated_data.get(key, 0) for key in ("regular", "vip", "premium")}

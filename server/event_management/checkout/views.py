@@ -15,7 +15,11 @@ class CheckoutQuoteView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get_event(self, event_id):
-        return Event.objects.filter(pk=event_id, status=Event.Status.APPROVED).select_related("organizer").first()
+        return Event.objects.filter(
+            pk=event_id,
+            status=Event.Status.APPROVED,
+            start_date__gte=timezone.localdate(),
+        ).select_related("organizer").first()
 
     @staticmethod
     def get_coupon(event, code):
