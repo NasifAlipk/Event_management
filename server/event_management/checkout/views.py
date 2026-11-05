@@ -1,3 +1,4 @@
+from django.db.models import F, Q
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -22,14 +23,24 @@ class CheckoutQuoteView(APIView):
         ).select_related("organizer").first()
 
     @staticmethod
-    def get_coupon(event, code):
-        return Coupon.objects.filter(
+    def get_coupon(event, code, user=None):
+        coupon = Coupon.objects.filter(
             code=(code or "").strip().upper(),
             organizer=event.organizer,
             status=Coupon.Status.APPROVED,
             start_date__lte=timezone.localdate(),
             end_date__gte=timezone.localdate(),
         ).first()
+        if coupon is None:
+            return None
+        if coupon.usage_limit_total and coupon.usage_count >= coupon.usage_limit_total:
+            return None
+        if user and coupon.usage_limit_per_user:
+            from checkout.models import CheckoutOrder
+            redeemed = CheckoutOrder.objects.filter(coupon=coupon, user=user, status=CheckoutOrder.Status.PAID).count()
+            if redeemed >= coupon.usage_limit_per_user:
+                return None
+        return coupon
 
     @staticmethod
     def available_coupons(event):
@@ -38,7 +49,7 @@ class CheckoutQuoteView(APIView):
             status=Coupon.Status.APPROVED,
             start_date__lte=timezone.localdate(),
             end_date__gte=timezone.localdate(),
-        )
+        ).filter(Q(usage_limit_total=0) | Q(usage_count__lt=F("usage_limit_total")))
         return CouponSerializer(coupons, many=True).data
 
     def build_response(self, request, event_id, values):
@@ -51,8 +62,11 @@ class CheckoutQuoteView(APIView):
             if quantity > limits[ticket]:
                 return Response({"detail": f"The selected {ticket} ticket quantity is not available."}, status=status.HTTP_400_BAD_REQUEST)
         code = (values.get("coupon") or "").strip().upper()
-        coupon = self.get_coupon(event, code)
+        coupon = self.get_coupon(event, code, request.user)
         if code and coupon is None:
+            exhausted = Coupon.objects.filter(code=code, organizer=event.organizer).first()
+            if exhausted and exhausted.usage_limit_total and exhausted.usage_count >= exhausted.usage_limit_total:
+                return Response({"detail": "This coupon has reached its usage limit."}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"detail": "This coupon is invalid, expired, or unavailable for this event organizer."}, status=status.HTTP_400_BAD_REQUEST)
         if coupon and coupon.minimum_purchase > 0:
             ticket_total = sum((getattr(event, field) * quantities[ticket] for ticket, field in (("regular", "regular_price"), ("vip", "vip_price"), ("premium", "premium_price"))), 0)

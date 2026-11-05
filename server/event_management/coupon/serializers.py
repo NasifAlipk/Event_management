@@ -6,12 +6,18 @@ from .models import Coupon
 
 class CouponSerializer(serializers.ModelSerializer):
     organizer_name = serializers.CharField(source="organizer.username", read_only=True)
+    remaining_uses = serializers.SerializerMethodField()
     max_discount = serializers.DecimalField(max_digits=10, decimal_places=2, allow_null=True, required=False)
 
     class Meta:
         model = Coupon
         fields = "__all__"
-        read_only_fields = ("id", "organizer", "status", "rejection_reason", "created_at", "updated_at", "organizer_name")
+        read_only_fields = ("id", "organizer", "status", "rejection_reason", "created_at", "updated_at", "organizer_name", "usage_count", "remaining_uses")
+
+    def get_remaining_uses(self, obj):
+        if not obj.usage_limit_total:
+            return None
+        return max(obj.usage_limit_total - obj.usage_count, 0)
 
     def validate(self, attrs):
         values = {field.name: getattr(self.instance, field.name) for field in Coupon._meta.fields} if self.instance else {}

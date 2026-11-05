@@ -15,6 +15,7 @@ from rest_framework.views import APIView
 from checkout.models import CheckoutOrder
 from checkout.serializers import CheckoutQuoteSerializer, calculate_quote
 from event.models import Event
+from coupon.models import Coupon
 from .serializers import StripeSessionSerializer
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -48,8 +49,11 @@ class CreateStripeCheckoutSessionView(APIView):
                 return Response({"detail": f"The selected {ticket} ticket quantity is not available."}, status=status.HTTP_400_BAD_REQUEST)
         from checkout.views import CheckoutQuoteView
         code = quote_serializer.validated_data.get("coupon", "")
-        coupon = CheckoutQuoteView.get_coupon(event, code)
+        coupon = CheckoutQuoteView.get_coupon(event, code, request.user)
         if code and coupon is None:
+            exhausted = Coupon.objects.filter(code=code, organizer=event.organizer).first()
+            if exhausted and exhausted.usage_limit_total and exhausted.usage_count >= exhausted.usage_limit_total:
+                return Response({"detail": "This coupon has reached its usage limit."}, status=status.HTTP_400_BAD_REQUEST)
             return Response({"detail": "This coupon is invalid, expired, or unavailable for this event organizer."}, status=status.HTTP_400_BAD_REQUEST)
         quote = calculate_quote(event, quantities, coupon)
         if coupon and quote["ticket_price"] < coupon.minimum_purchase:
@@ -107,6 +111,23 @@ def _reserve_capacity(order):
     return event
 
 
+def _lock_coupon_for_redemption(order):
+    """Lock a coupon and validate it without changing usage yet."""
+    if not order.coupon_id:
+        return None
+    coupon = Coupon.objects.select_for_update().get(pk=order.coupon_id)
+    today = timezone.localdate()
+    if coupon.status != Coupon.Status.APPROVED or coupon.start_date > today or coupon.end_date < today:
+        return False
+    if coupon.usage_limit_total and coupon.usage_count >= coupon.usage_limit_total:
+        return False
+    if coupon.usage_limit_per_user:
+        redeemed = CheckoutOrder.objects.filter(coupon=coupon, user=order.user, status=CheckoutOrder.Status.PAID).count()
+        if redeemed >= coupon.usage_limit_per_user:
+            return False
+    return coupon
+
+
 def _stripe_data(value):
     """Return Stripe SDK objects as plain dictionaries before reading nested data."""
     if hasattr(value, "to_dict"):
@@ -150,7 +171,11 @@ class StripeWebhookView(APIView):
                 return HttpResponse(status=200)
             if event_type == "checkout.session.completed":
                 if order.status != CheckoutOrder.Status.PAID:
-                    if _reserve_capacity(order) is not None:
+                    coupon = _lock_coupon_for_redemption(order)
+                    if coupon is not False and _reserve_capacity(order) is not None:
+                        if coupon is not None:
+                            coupon.usage_count += 1
+                            coupon.save(update_fields=("usage_count", "updated_at"))
                         order.status = CheckoutOrder.Status.PAID
                         order.stripe_payment_intent = session.get("payment_intent") or ""
                         from ticket.services import issue_tickets

@@ -240,7 +240,7 @@ export default function PaymentMethod() {
               <div className="mt-6 space-y-3">
                 {coupons.length ? (
                   coupons.map((coupon) => (
-                    <div key={coupon.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-white/15 bg-[#081014] p-4">
+                    <div key={coupon.id} className={`flex flex-wrap items-center gap-4 rounded-xl border border-white/15 bg-[#081014] p-4 ${coupon.remaining_uses === 0 ? "opacity-60" : ""}`}>
                       <span className="grid h-11 w-11 place-items-center rounded-lg bg-[#00f5a0]/15 text-[#00f5a0]">
                         <Tag size={23} />
                       </span>
@@ -249,6 +249,9 @@ export default function PaymentMethod() {
                         <p className="text-sm text-slate-400">{coupon.description || "Discount available for this event."}</p>
                         <p className="mt-1 text-xs text-[#00f5a0]">
                           {coupon.discount_type === "PERCENTAGE" ? `${coupon.discount_value}% off` : `${money(coupon.discount_value)} off`}
+                        </p>
+                        <p className={`mt-1 text-xs ${coupon.remaining_uses === 0 ? "text-red-300" : "text-slate-400"}`}>
+                          {coupon.remaining_uses === null ? "Unlimited uses" : coupon.remaining_uses === 0 ? "Usage limit reached" : `${coupon.remaining_uses} use${coupon.remaining_uses === 1 ? "" : "s"} remaining`}
                         </p>
                       </div>
                       <code className="rounded border border-dashed border-slate-500 px-3 py-2 text-sm">
@@ -267,8 +270,9 @@ export default function PaymentMethod() {
                       </button>
                       <button 
                         type="button" 
+                        disabled={coupon.remaining_uses === 0}
                         onClick={() => applyCoupon(coupon.code)} 
-                        className="rounded-lg bg-[#00e692] px-4 py-2 text-sm font-semibold text-[#03110c]"
+                        className="rounded-lg bg-[#00e692] px-4 py-2 text-sm font-semibold text-[#03110c] disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-300"
                       >
                         Apply
                       </button>
