@@ -3,7 +3,6 @@ from decimal import Decimal
 import stripe
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Sum
 from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -91,11 +90,21 @@ class StripeSessionStatusView(APIView):
         return Response({"status": order.status, "order_id": str(order.id), "total": order.total})
 
 
-def _has_capacity(order):
-    paid = CheckoutOrder.objects.filter(event=order.event, status=CheckoutOrder.Status.PAID).exclude(pk=order.pk).aggregate(
-        regular=Sum("regular_quantity"), vip=Sum("vip_quantity"), premium=Sum("premium_quantity")
-    )
-    return all((paid[ticket] or 0) + getattr(order, f"{ticket}_quantity") <= getattr(order.event, f"{ticket}_quantity") for ticket in ("regular", "vip", "premium"))
+def _reserve_capacity(order):
+    """Atomically consume the purchased quantities from the event stock."""
+    event = Event.objects.select_for_update().get(pk=order.event_id)
+    quantities = {
+        "regular_quantity": order.regular_quantity,
+        "vip_quantity": order.vip_quantity,
+        "premium_quantity": order.premium_quantity,
+    }
+    if any(getattr(event, field) < quantity for field, quantity in quantities.items()):
+        return None
+    for field, quantity in quantities.items():
+        setattr(event, field, getattr(event, field) - quantity)
+    event.save(update_fields=(*quantities.keys(), "updated_at"))
+    order.event = event
+    return event
 
 
 def _stripe_data(value):
@@ -141,7 +150,7 @@ class StripeWebhookView(APIView):
                 return HttpResponse(status=200)
             if event_type == "checkout.session.completed":
                 if order.status != CheckoutOrder.Status.PAID:
-                    if _has_capacity(order):
+                    if _reserve_capacity(order) is not None:
                         order.status = CheckoutOrder.Status.PAID
                         order.stripe_payment_intent = session.get("payment_intent") or ""
                         from ticket.services import issue_tickets
