@@ -144,6 +144,8 @@ class StripeWebhookView(APIView):
                     if _has_capacity(order):
                         order.status = CheckoutOrder.Status.PAID
                         order.stripe_payment_intent = session.get("payment_intent") or ""
+                        from ticket.services import issue_tickets
+                        issue_tickets(order)
                     else:
                         order.status = CheckoutOrder.Status.FAILED
                     order.save(update_fields=("status", "stripe_payment_intent", "updated_at"))

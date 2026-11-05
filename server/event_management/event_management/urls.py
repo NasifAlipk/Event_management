@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/organizer-dashboard/', include('organizerdashboard.urls')),
     path('api/checkout/', include('checkout.urls')),
     path('api/payment-methods/', include('paymentmethod.urls')),
+    path('api/tickets/', include('ticket.urls')),
 ]
 
 if settings.DEBUG:
