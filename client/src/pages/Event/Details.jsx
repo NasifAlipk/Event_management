@@ -31,6 +31,13 @@ const formatTime = (value) => {
 
 const money = (value) => `₹${Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 
+const isPastEvent = (startDate) => {
+  if (!startDate) return false;
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return startDate < today;
+};
+
 export default function EventDetails() {
   const { eventId } = useParams();
   const navigate = useNavigate();
@@ -67,6 +74,7 @@ export default function EventDetails() {
   }
 
   const isOwner = Number(event.organizer) === Number(user?.id);
+  const completed = isPastEvent(event.start_date);
   const venue = [event.venue_name, event.city, event.state, event.country].filter(Boolean).join(", ");
 
   return (
@@ -111,6 +119,11 @@ export default function EventDetails() {
                 {isOwner && event.status === "APPROVED" && (
                   <span className="rounded-full bg-[#00f5a0]/10 px-3 py-1.5 text-xs text-[#00f5a0]">
                     Approved event
+                  </span>
+                )}
+                {completed && (
+                  <span className="rounded-full border border-red-300/30 bg-red-950/70 px-3 py-1.5 text-xs font-medium text-red-200">
+                    Event Completed
                   </span>
                 )}
               </div>
@@ -188,12 +201,18 @@ export default function EventDetails() {
               Back
             </Link>
             
-            <Link 
-              to={`/booking/checkout/${event.id}`} 
-              className="inline-flex items-center gap-3 rounded-lg bg-[#00e692] px-7 py-3 text-sm font-semibold text-[#03110c] transition hover:bg-[#00f5a0] sm:min-w-64 sm:justify-center"
-            >
-              Proceed to Checkout <ArrowRight size={19} />
-            </Link>
+            {completed ? (
+              <span className="inline-flex cursor-not-allowed items-center rounded-lg border border-red-300/30 bg-red-950/50 px-7 py-3 text-sm font-semibold text-red-200 sm:min-w-64 sm:justify-center">
+                Booking unavailable
+              </span>
+            ) : (
+              <Link
+                to={`/booking/checkout/${event.id}`}
+                className="inline-flex items-center gap-3 rounded-lg bg-[#00e692] px-7 py-3 text-sm font-semibold text-[#03110c] transition hover:bg-[#00f5a0] sm:min-w-64 sm:justify-center"
+              >
+                Proceed to Checkout <ArrowRight size={19} />
+              </Link>
+            )}
           </div>
         </div>
       </footer>

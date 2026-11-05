@@ -24,6 +24,7 @@ class Coupon(models.Model):
     end_date = models.DateField()
     usage_limit_total = models.PositiveIntegerField(default=0)
     usage_limit_per_user = models.PositiveIntegerField(default=0)
+    usage_count = models.PositiveIntegerField(default=0, editable=False)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     rejection_reason = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)

@@ -72,7 +72,9 @@ function TicketCard({ type, price, available, quantity, onChange }) {
     <article className={`flex min-h-[375px] flex-col rounded-xl border-2 bg-[#111820] p-6 transition ${style.border} ${quantity ? "ring-1 ring-white/20" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <h3 className={`text-2xl font-semibold ${style.text}`}>{style.label}</h3>
-        <span className={`text-sm ${style.text}`}>Remaining {available}</span>
+        <span className={`text-sm ${available > 0 ? style.text : "text-red-300"}`}>
+          {available > 0 ? `Remaining ${available}` : "Sold out"}
+        </span>
       </div>
       
       <p className="mt-3 text-3xl font-semibold text-slate-100">{money(price)}</p>
@@ -209,6 +211,11 @@ export default function Checkout() {
           <section className="mt-8">
             <h2 className="text-3xl font-semibold">Choose Your Ticket</h2>
             <p className="mt-2 text-slate-400">Select the perfect experience for you</p>
+            {Object.values(tickets).every(({ available }) => available === 0) && (
+              <p className="mt-4 rounded-lg border border-red-300/20 bg-red-950/30 px-4 py-3 text-sm text-red-200">
+                All ticket types for this event are sold out.
+              </p>
+            )}
             
             <div className="mt-6 grid gap-5 xl:grid-cols-3">
               {Object.keys(ticketStyles).map((type) => (

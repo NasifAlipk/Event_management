@@ -162,6 +162,11 @@ export default function Coupon() {
                         <br />
                         {coupon.rejection_reason || "Nil"}
                       </span>
+                      <span>
+                        <b className="text-white">Remaining uses</b>
+                        <br />
+                        {coupon.remaining_uses === null ? "Unlimited" : coupon.remaining_uses}
+                      </span>
                     </div>
 
                     <div className="mt-4 flex justify-end gap-2">

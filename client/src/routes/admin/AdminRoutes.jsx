@@ -13,6 +13,7 @@ import AdminHomePage from "../../pages/admin/Home.jsx";
 import AdminLoginPage from "../../pages/admin/Login.jsx";
 import AdminProfilePage from "../../pages/admin/Profile.jsx";
 import AdminResetPassword from "../../pages/admin/ResetPassword.jsx";
+import AdminTickets from "../../pages/admin/Tickets.jsx";
 
 export const adminRoutes = [
     <Route key="admin-login" path="/admin/login" element={<AdminLoginPage />} />,
@@ -28,5 +29,6 @@ export const adminRoutes = [
       <Route path="/admin/events/:eventId" element={<AdminEventDetailsPage />} />
       <Route path="/admin/coupons" element={<AdminCoupons />} />
       <Route path="/admin/coupons/:couponId" element={<AdminCouponDetails />} />
+      <Route path="/admin/tickets" element={<AdminTickets />} />
     </Route>,
 ];

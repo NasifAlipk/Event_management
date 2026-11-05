@@ -11,6 +11,13 @@ import { useAuth } from "../../hooks/useAuth";
 import ExploreLayout from "../../components/layout/Explore/Layout";
 import { eventsApi } from "../../services/events";
 
+const isPastEvent = (startDate) => {
+  if (!startDate) return false;
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return startDate < today;
+};
+
 export default function Explore() {
   const { user } = useAuth();
   const location = useLocation();
@@ -237,8 +244,13 @@ export default function Explore() {
                   <Link
                     to={`/events/${event.id}`}
                     key={event.id}
-                    className="block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] transition hover:-translate-y-1 hover:border-[#00ff85]/50"
+                    className="relative block overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] transition hover:-translate-y-1 hover:border-[#00ff85]/50"
                   >
+                    {isPastEvent(event.start_date) && (
+                      <span className="absolute right-3 top-3 z-10 rounded-full border border-red-300/30 bg-red-950/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-red-200">
+                        Event Completed
+                      </span>
+                    )}
                     <img
                       src={event.main_banner}
                       alt={event.title}

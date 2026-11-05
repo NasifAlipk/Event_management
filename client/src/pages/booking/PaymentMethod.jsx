@@ -18,17 +18,12 @@ import { useAuth } from "../../hooks/useAuth";
 import { checkoutApi } from "../../services/checkout";
 import { eventsApi } from "../../services/events";
 
-const money = (value) => {
-  return `₹${Number(value || 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-  })}`;
-};
+// --- Utility Functions ---
+const money = (value) => 
+  `₹${Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 
 const dateText = (value) => {
-  if (!value) {
-    return "Date to be announced";
-  }
-
+  if (!value) return "Date to be announced";
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
@@ -37,15 +32,9 @@ const dateText = (value) => {
 };
 
 const timeText = (value) => {
-  if (!value) {
-    return "Time to be announced";
-  }
-
+  if (!value) return "Time to be announced";
   const [hour, minute] = value.split(":").map(Number);
-
-  if (Number.isNaN(hour)) {
-    return value;
-  }
+  if (Number.isNaN(hour)) return value;
 
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
@@ -53,6 +42,7 @@ const timeText = (value) => {
   }).format(new Date(2000, 0, 1, hour, minute));
 };
 
+// --- Sub-Components ---
 function PaymentOption({ selected, icon: Icon, title, description, onClick }) {
   return (
     <button 
@@ -78,6 +68,55 @@ function PaymentOption({ selected, icon: Icon, title, description, onClick }) {
   );
 }
 
+function CouponCard({ coupon, copied, onCopy, onApply }) {
+  const isExhausted = coupon.remaining_uses === 0;
+
+  return (
+    <div className={`flex flex-wrap items-center gap-4 rounded-xl border border-white/15 bg-[#081014] p-4 ${isExhausted ? "opacity-60" : ""}`}>
+      <span className="grid h-11 w-11 place-items-center rounded-lg bg-[#00f5a0]/15 text-[#00f5a0]">
+        <Tag size={23} />
+      </span>
+      
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold">{coupon.name}</p>
+        <p className="text-sm text-slate-400">{coupon.description || "Discount available for this event."}</p>
+        <p className="mt-1 text-xs text-[#00f5a0]">
+          {coupon.discount_type === "PERCENTAGE" ? `${coupon.discount_value}% off` : `${money(coupon.discount_value)} off`}
+        </p>
+        <p className={`mt-1 text-xs ${isExhausted ? "text-red-300" : "text-slate-400"}`}>
+          {coupon.remaining_uses === null 
+            ? "Unlimited uses" 
+            : isExhausted 
+              ? "Usage limit reached" 
+              : `${coupon.remaining_uses} use${coupon.remaining_uses === 1 ? "" : "s"} remaining`}
+        </p>
+      </div>
+
+      <code className="rounded border border-dashed border-slate-500 px-3 py-2 text-sm">
+        {coupon.code}
+      </code>
+
+      <button 
+        type="button" 
+        onClick={() => onCopy(coupon.code)} 
+        className="inline-flex items-center gap-2 rounded-lg border border-[#00f5a0]/60 px-3 py-2 text-sm text-[#00f5a0]"
+      >
+        <Copy size={15} />{copied === coupon.code ? "Copied" : "Copy"}
+      </button>
+
+      <button 
+        type="button" 
+        disabled={isExhausted}
+        onClick={() => onApply(coupon.code)} 
+        className="rounded-lg bg-[#00e692] px-4 py-2 text-sm font-semibold text-[#03110c] disabled:cursor-not-allowed disabled:bg-slate-600 disabled:text-slate-300"
+      >
+        Apply
+      </button>
+    </div>
+  );
+}
+
+// --- Main Component ---
 export default function PaymentMethod() {
   const { eventId } = useParams();
   const { state } = useLocation();
@@ -100,9 +139,29 @@ export default function PaymentMethod() {
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [notice, setNotice] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("WALLET");
+  const [paymentMethod, setPaymentMethod] = useState("STRIPE");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState("");
+  const [creatingSession, setCreatingSession] = useState(false);
+
+  const startStripeCheckout = async () => {
+    if (paymentMethod !== "STRIPE") {
+      setNotice("Select Stripe to continue with test checkout.");
+      return;
+    }
+    setCreatingSession(true);
+    try {
+      const { data } = await checkoutApi.createStripeSession({
+        event_id: eventId,
+        ...quantities,
+        coupon: couponCode,
+      });
+      window.location.assign(data.checkout_url);
+    } catch (requestError) {
+      setCouponError(requestError.response?.data?.detail || "Unable to start Stripe Checkout.");
+      setCreatingSession(false);
+    }
+  };
 
   const quote = async (code = "") => {
     const { data } = await checkoutApi.quote(eventId, { ...quantities, coupon: code });
@@ -161,6 +220,12 @@ export default function PaymentMethod() {
     }
   };
 
+  const handleCopyCoupon = (code) => {
+    setCouponCode(code);
+    void navigator.clipboard?.writeText(code);
+    setCopied(code);
+  };
+
   if (loading || !event) {
     return (
       <ExploreLayout>
@@ -180,6 +245,7 @@ export default function PaymentMethod() {
           
           {/* Left Column */}
           <div className="space-y-6">
+            
             {/* Payment Options Section */}
             <section className="rounded-2xl border border-[#00f5a0]/30 bg-[#0c1b1c] p-6 sm:p-8">
               <div className="flex items-start gap-4">
@@ -220,39 +286,13 @@ export default function PaymentMethod() {
               <div className="mt-6 space-y-3">
                 {coupons.length ? (
                   coupons.map((coupon) => (
-                    <div key={coupon.id} className="flex flex-wrap items-center gap-4 rounded-xl border border-white/15 bg-[#081014] p-4">
-                      <span className="grid h-11 w-11 place-items-center rounded-lg bg-[#00f5a0]/15 text-[#00f5a0]">
-                        <Tag size={23} />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold">{coupon.name}</p>
-                        <p className="text-sm text-slate-400">{coupon.description || "Discount available for this event."}</p>
-                        <p className="mt-1 text-xs text-[#00f5a0]">
-                          {coupon.discount_type === "PERCENTAGE" ? `${coupon.discount_value}% off` : `${money(coupon.discount_value)} off`}
-                        </p>
-                      </div>
-                      <code className="rounded border border-dashed border-slate-500 px-3 py-2 text-sm">
-                        {coupon.code}
-                      </code>
-                      <button 
-                        type="button" 
-                        onClick={() => { 
-                          setCouponCode(coupon.code); 
-                          void navigator.clipboard?.writeText(coupon.code); 
-                          setCopied(coupon.code); 
-                        }} 
-                        className="inline-flex items-center gap-2 rounded-lg border border-[#00f5a0]/60 px-3 py-2 text-sm text-[#00f5a0]"
-                      >
-                        <Copy size={15} />{copied === coupon.code ? "Copied" : "Copy"}
-                      </button>
-                      <button 
-                        type="button" 
-                        onClick={() => applyCoupon(coupon.code)} 
-                        className="rounded-lg bg-[#00e692] px-4 py-2 text-sm font-semibold text-[#03110c]"
-                      >
-                        Apply
-                      </button>
-                    </div>
+                    <CouponCard 
+                      key={coupon.id} 
+                      coupon={coupon} 
+                      copied={copied} 
+                      onCopy={handleCopyCoupon} 
+                      onApply={applyCoupon} 
+                    />
                   ))
                 ) : (
                   <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm text-slate-400">
@@ -266,7 +306,7 @@ export default function PaymentMethod() {
                   <Tag size={18} className="text-[#00f5a0]" />
                   <input 
                     value={couponCode} 
-                    onChange={(event) => setCouponCode(event.target.value)} 
+                    onChange={(e) => setCouponCode(e.target.value)} 
                     placeholder="Enter coupon code" 
                     className="w-full bg-transparent py-4 text-sm text-white outline-none placeholder:text-slate-500" 
                   />
@@ -341,12 +381,13 @@ export default function PaymentMethod() {
               <span className="text-2xl font-semibold text-[#00f5a0]">{money(pricing.total)}</span>
             </div>
 
-            <button 
-              type="button" 
-              onClick={() => setNotice("Payment processing will be connected soon.")} 
-              className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#00e692] px-5 py-4 font-semibold text-[#03110c] hover:bg-[#00f5a0]"
+            <button
+              type="button"
+              disabled={creatingSession}
+              onClick={startStripeCheckout}
+              className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#00e692] px-5 py-4 font-semibold text-[#03110c] hover:bg-[#00f5a0] disabled:cursor-wait disabled:opacity-60"
             >
-              <LockKeyhole size={20} />Proceed to Pay <ArrowRight size={19} />
+              <LockKeyhole size={20} />{creatingSession ? "Opening Stripe..." : "Proceed to Pay"} <ArrowRight size={19} />
             </button>
             
             <button 
