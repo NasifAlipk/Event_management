@@ -1,6 +1,9 @@
 import secrets
+from collections import OrderedDict
+from datetime import datetime
 
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -19,6 +22,48 @@ class MyTicketsView(APIView):
         if order_id:
             tickets = tickets.filter(order_id=order_id)
         return Response({"tickets": TicketSerializer(tickets, many=True, context={"request": request}).data})
+
+
+class ProfileTicketsView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        tickets = Ticket.objects.filter(
+            user=request.user,
+            order__status="PAID",
+        ).exclude(status=Ticket.Status.CANCELLED).select_related("event", "user", "order")
+        grouped = OrderedDict()
+        now = timezone.localtime()
+        for ticket in tickets:
+            key = str(ticket.order_id)
+            if key not in grouped:
+                start = timezone.make_aware(
+                    datetime.combine(ticket.event.start_date, ticket.event.start_time),
+                    timezone.get_current_timezone(),
+                )
+                grouped[key] = {
+                    "id": key,
+                    "ticket": TicketSerializer(ticket, context={"request": request}).data,
+                    "ticket_count": 0,
+                    "ticket_types": {},
+                    "attended": start <= now,
+                }
+            booking = grouped[key]
+            booking["ticket_count"] += 1
+            booking["ticket_types"][ticket.ticket_type] = booking["ticket_types"].get(ticket.ticket_type, 0) + 1
+
+        bookings = []
+        for booking in grouped.values():
+            booking["ticket_types"] = ", ".join(
+                f"{label} × {count}" for label, count in booking["ticket_types"].items()
+            )
+            bookings.append(booking)
+        attended = {item["ticket"]["event_id"] for item in bookings if item["attended"]}
+        return Response({
+            "bookings": bookings,
+            "tickets_booked": sum(item["ticket_count"] for item in bookings),
+            "events_attended": len(attended),
+        })
 
 
 class TicketDetailView(APIView):
