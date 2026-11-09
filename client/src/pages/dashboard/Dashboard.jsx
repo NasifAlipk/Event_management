@@ -16,7 +16,6 @@ const formatDate = (value) => {
     year: "numeric",
   }).format(date);
 };
-
 const formatTime = (value) => {
   if (!value) return "Time to be announced";
   const [hours, minutes] = value.split(":").map(Number);
