@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'checkout',
     'paymentmethod',
     'ticket',
+    'profile',
 ]
 
 MIDDLEWARE = [

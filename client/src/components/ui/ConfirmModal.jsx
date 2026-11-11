@@ -14,8 +14,10 @@ export default function ConfirmModal({
   onConfirm,
   loading,
   confirmLabel,
+  cancelLabel = "Cancel",
 }) {
   const rejecting = type === "reject";
+  const danger = rejecting || type === "cancel";
   const validReason =
     !rejecting || reason.trim().length >= 5;
 
@@ -30,12 +32,12 @@ export default function ConfirmModal({
         <div className="flex items-start justify-between gap-4">
           <div
             className={`grid h-11 w-11 place-items-center rounded-xl ${
-              rejecting
+              danger
                 ? "bg-red-400/15 text-red-300"
                 : "bg-[#00ff85]/15 text-[#00ff85]"
             }`}
           >
-            {rejecting ? (
+            {danger ? (
               <XCircle size={22} />
             ) : (
               <CheckCircle2 size={22} />
@@ -104,7 +106,7 @@ export default function ConfirmModal({
             disabled={loading}
             className="rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/10 disabled:opacity-50"
           >
-            Cancel
+            {cancelLabel}
           </button>
 
           <button
@@ -112,7 +114,7 @@ export default function ConfirmModal({
             onClick={onConfirm}
             disabled={loading || !validReason}
             className={`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
-              rejecting
+              danger
                 ? "bg-red-500 text-white hover:bg-red-600"
                 : "bg-[#00ff85] text-black hover:bg-[#00d970]"
             }`}

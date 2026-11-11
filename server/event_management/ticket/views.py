@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from .models import Ticket
 from .permissions import IsAdministrator
 from .serializers import AdminTicketSerializer, TicketSerializer
+from profile.services import cancellation_allowed
 
 
 class MyTicketsView(APIView):
@@ -47,10 +48,14 @@ class ProfileTicketsView(APIView):
                     "ticket_count": 0,
                     "ticket_types": {},
                     "attended": start <= now,
+                    "ticket_ids": [],
+                    "can_cancel": cancellation_allowed(ticket.event) and ticket.status == Ticket.Status.VALID,
                 }
             booking = grouped[key]
             booking["ticket_count"] += 1
+            booking["ticket_ids"].append(str(ticket.id))
             booking["ticket_types"][ticket.ticket_type] = booking["ticket_types"].get(ticket.ticket_type, 0) + 1
+            booking["can_cancel"] = booking["can_cancel"] and ticket.status == Ticket.Status.VALID
 
         bookings = []
         for booking in grouped.values():
