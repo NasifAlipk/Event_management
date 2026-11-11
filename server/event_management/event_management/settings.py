@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'paymentmethod',
     'ticket',
     'profile',
+    'wallet',
 ]
 
 MIDDLEWARE = [

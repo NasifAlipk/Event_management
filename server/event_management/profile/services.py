@@ -5,6 +5,8 @@ from django.utils import timezone
 
 from event.models import Event
 from ticket.models import Ticket
+from wallet.models import WalletTransaction
+from wallet.services import credit_wallet
 
 
 def event_start(event):
@@ -50,4 +52,13 @@ def cancel_booking(order, user):
     for field, amount in restored.items():
         setattr(event, field, getattr(event, field) + amount)
     event.save(update_fields=(*restored.keys(), "updated_at"))
+    credit_wallet(
+        user=user,
+        amount=locked_order.total,
+        reason=WalletTransaction.Reason.EVENT_CANCELLED,
+        description=f"Refund for cancelled tickets: {locked_order.event.title}",
+        order=locked_order,
+        event=locked_order.event,
+        reference=f"CANCELLATION_REFUND:{locked_order.pk}",
+    )
     return locked_order

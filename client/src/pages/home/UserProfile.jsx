@@ -22,7 +22,7 @@ function BookingCard({ booking, onMore, onCancel }) {
   const ticket = booking.ticket;
 
   return (
-    <article className="flex gap-4 rounded-xl border border-white/10 bg-[#202b3b] p-3 transition hover:border-[#00ff85]/50">
+    <article className={`flex gap-4 rounded-xl border p-3 transition ${booking.cancelled ? "border-red-400/50 bg-red-950/25" : "border-white/10 bg-[#202b3b] hover:border-[#00ff85]/50"}`}>
       <div className="h-24 w-28 shrink-0 overflow-hidden rounded-lg bg-black">
         {ticket.event_image && (
           <img
@@ -34,7 +34,7 @@ function BookingCard({ booking, onMore, onCancel }) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <h3 className="truncate font-semibold">{ticket.event_name}</h3>
+        <div className="flex items-center gap-2"><h3 className="truncate font-semibold">{ticket.event_name}</h3>{booking.cancelled && <span className="rounded-full bg-red-400/15 px-2 py-1 text-[10px] font-semibold tracking-wide text-red-300">CANCELLED</span>}</div>
         <div className="mt-2 grid gap-1 text-xs text-slate-400 sm:grid-cols-2">
           <span className="inline-flex items-center gap-1">
             <CalendarDays size={12} />

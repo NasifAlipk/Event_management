@@ -17,6 +17,7 @@ import OrganizerDashboard from "../../pages/organizerdashboard/OrganizerDashboar
 import OrganizerApplication from "../../pages/home/OrganizerApplication.jsx";
 import GlobalProfile from "../../pages/home/GlobalProfile.jsx";
 import HomeEntry from "../../pages/home/HomeEntry.jsx";
+import UserWallet from "../../pages/wallet/UserWallet.jsx";
 
 export const userRoutes = [
   <Route key="home" path="/home" element={<HomeEntry />} />,
@@ -37,6 +38,7 @@ export const userRoutes = [
         <Route path="/coupons/edit/:couponId" element={<EditCoupon />} />
         <Route path="/organizer-dashboard" element={<OrganizerDashboard />} />
         <Route path="/profile" element={<GlobalProfile />} />
+        <Route path="/wallet" element={<UserWallet />} />
         <Route path="/apply-organizer" element={<OrganizerApplication />} />
       </Route>
     </Route>

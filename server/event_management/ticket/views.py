@@ -32,7 +32,7 @@ class ProfileTicketsView(APIView):
         tickets = Ticket.objects.filter(
             user=request.user,
             order__status="PAID",
-        ).exclude(status=Ticket.Status.CANCELLED).select_related("event", "user", "order")
+        ).select_related("event", "user", "order")
         grouped = OrderedDict()
         now = timezone.localtime()
         for ticket in tickets:
@@ -47,15 +47,19 @@ class ProfileTicketsView(APIView):
                     "ticket": TicketSerializer(ticket, context={"request": request}).data,
                     "ticket_count": 0,
                     "ticket_types": {},
-                    "attended": start <= now,
+                    "attended": start <= now and ticket.status != Ticket.Status.CANCELLED,
                     "ticket_ids": [],
                     "can_cancel": cancellation_allowed(ticket.event) and ticket.status == Ticket.Status.VALID,
+                    "cancelled": ticket.status == Ticket.Status.CANCELLED,
                 }
             booking = grouped[key]
             booking["ticket_count"] += 1
             booking["ticket_ids"].append(str(ticket.id))
             booking["ticket_types"][ticket.ticket_type] = booking["ticket_types"].get(ticket.ticket_type, 0) + 1
             booking["can_cancel"] = booking["can_cancel"] and ticket.status == Ticket.Status.VALID
+            if ticket.status == Ticket.Status.CANCELLED:
+                booking["attended"] = False
+                booking["cancelled"] = True
 
         bookings = []
         for booking in grouped.values():
