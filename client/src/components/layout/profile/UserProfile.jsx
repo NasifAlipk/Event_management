@@ -19,13 +19,13 @@ export default function UserProfileLayout() {
       </p>
 
       <nav className="mt-7 space-y-2">
-        <a
-          href="#profile"
+        <Link
+          to="/profile"
           className="flex items-center gap-2 rounded-lg bg-[#00ff85] px-4 py-2.5 font-semibold text-black"
         >
           <UserRound size={16} />
           Profile
-        </a>
+        </Link>
 
         <Link to="/wallet" className="flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-left text-slate-300 hover:bg-white/10 hover:text-[#00ff85]">
           <Wallet size={16} />

@@ -28,6 +28,7 @@ class CheckoutOrder(models.Model):
     convenience_fee = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     gst = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     coupon_discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    wallet_discount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     currency = models.CharField(max_length=3, default="inr")
     created_at = models.DateTimeField(auto_now_add=True)

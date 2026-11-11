@@ -16,6 +16,7 @@ from checkout.models import CheckoutOrder
 from checkout.serializers import CheckoutQuoteSerializer, calculate_quote
 from event.models import Event
 from coupon.models import Coupon
+from wallet.models import Wallet, WalletTransaction
 from .serializers import StripeSessionSerializer
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
@@ -26,7 +27,93 @@ class PaymentMethodOptionsView(APIView):
 
     def get(self, request):
         # These are display options only until payment processing is implemented.
-        return Response({"methods": [{"code": "WALLET", "name": "Wallet", "enabled": False}, {"code": "STRIPE", "name": "Stripe", "enabled": bool(settings.STRIPE_SECRET_KEY)}]})
+        wallet, _ = Wallet.objects.get_or_create(user=request.user)
+        return Response({"methods": [{"code": "WALLET", "name": "Wallet", "enabled": True, "balance": wallet.balance}, {"code": "STRIPE", "name": "Stripe", "enabled": bool(settings.STRIPE_SECRET_KEY)}]})
+
+
+def _wallet_quote(event, quantities, coupon):
+    quote = calculate_quote(event, quantities, coupon)
+    eligible = max(quote["ticket_price"] - quote["coupon_discount"], Decimal("0.00"))
+    wallet_discount = (eligible * Decimal("0.10")).quantize(Decimal("0.01"))
+    taxable = max(quote["ticket_price"] + quote["convenience_fee"] - quote["coupon_discount"] - wallet_discount, Decimal("0.00"))
+    gst = (taxable * Decimal("0.18")).quantize(Decimal("0.01"))
+    return {**quote, "wallet_discount": wallet_discount, "gst": gst, "total": (taxable + gst).quantize(Decimal("0.01"))}
+
+
+class WalletPaymentView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        serializer = StripeSessionSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        values = serializer.validated_data
+        event = Event.objects.filter(pk=values["event_id"], status=Event.Status.APPROVED).first()
+        if event is None:
+            return Response({"detail": "This event is not available for checkout."}, status=404)
+        if event.start_date < timezone.localdate():
+            return Response({"detail": "Booking is unavailable because this event has completed."}, status=400)
+        quote_serializer = CheckoutQuoteSerializer(data=values)
+        quote_serializer.is_valid(raise_exception=True)
+        quantities = {key: quote_serializer.validated_data.get(key, 0) for key in ("regular", "vip", "premium")}
+        from checkout.views import CheckoutQuoteView
+        code = quote_serializer.validated_data.get("coupon", "")
+        coupon = CheckoutQuoteView.get_coupon(event, code, request.user)
+        if code and coupon is None:
+            return Response({"detail": "This coupon is invalid, expired, or unavailable."}, status=400)
+        quote = _wallet_quote(event, quantities, coupon)
+        if quote["total"] <= Decimal("0.00"):
+            return Response({"detail": "Select at least one ticket before paying."}, status=400)
+        if coupon and quote["ticket_price"] < coupon.minimum_purchase:
+            return Response({"detail": f"This coupon requires a minimum purchase of ₹{coupon.minimum_purchase}."}, status=400)
+        with transaction.atomic():
+            idempotency_key = str(request.data.get("idempotency_key") or "").strip()
+            reference = f"WALLET_PAYMENT:{idempotency_key}" if idempotency_key else ""
+            if reference:
+                previous = WalletTransaction.objects.filter(reference=reference, wallet__user=request.user).select_related("order").first()
+                if previous:
+                    return Response({"status": previous.order.status, "order_id": str(previous.order_id), "total": previous.amount, "wallet_balance": previous.balance_after})
+            event = Event.objects.select_for_update().get(pk=event.pk)
+            limits = {"regular": event.regular_quantity, "vip": event.vip_quantity, "premium": event.premium_quantity}
+            if any(quantities[key] > limits[key] for key in quantities):
+                return Response({"detail": "One or more selected ticket quantities are unavailable."}, status=400)
+            locked_coupon = None
+            if coupon:
+                locked_coupon = Coupon.objects.select_for_update().get(pk=coupon.pk)
+                if locked_coupon.usage_limit_total and locked_coupon.usage_count >= locked_coupon.usage_limit_total:
+                    return Response({"detail": "This coupon has reached its usage limit."}, status=400)
+                if locked_coupon.usage_limit_per_user and CheckoutOrder.objects.filter(coupon=locked_coupon, user=request.user, status=CheckoutOrder.Status.PAID).count() >= locked_coupon.usage_limit_per_user:
+                    return Response({"detail": "You have already reached this coupon's usage limit."}, status=400)
+            wallet, _ = Wallet.objects.select_for_update().get_or_create(user=request.user)
+            if wallet.balance < quote["total"]:
+                return Response({"detail": "Insufficient wallet balance for this purchase."}, status=400)
+            order = CheckoutOrder.objects.create(user=request.user, event=event, coupon=locked_coupon,
+                status=CheckoutOrder.Status.PAID, regular_quantity=quantities["regular"], vip_quantity=quantities["vip"],
+                premium_quantity=quantities["premium"], ticket_price=quote["ticket_price"], convenience_fee=quote["convenience_fee"],
+                gst=quote["gst"], coupon_discount=quote["coupon_discount"], wallet_discount=quote["wallet_discount"], total=quote["total"])
+            for key, field in (("regular", "regular_quantity"), ("vip", "vip_quantity"), ("premium", "premium_quantity")):
+                setattr(event, field, getattr(event, field) - quantities[key])
+            event.save(update_fields=("regular_quantity", "vip_quantity", "premium_quantity", "updated_at"))
+            wallet.balance -= quote["total"]
+            wallet.save(update_fields=("balance", "updated_at"))
+            WalletTransaction.objects.create(wallet=wallet, transaction_type=WalletTransaction.TransactionType.DEBIT,
+                reason=WalletTransaction.Reason.TICKET_PURCHASE, amount=quote["total"], balance_after=wallet.balance,
+                order=order, event=event, reference=reference or f"WALLET_PAYMENT:{order.id}")
+            if locked_coupon:
+                locked_coupon.usage_count += 1
+                locked_coupon.save(update_fields=("usage_count", "updated_at"))
+            from ticket.services import issue_tickets
+            issue_tickets(order)
+        return Response({"status": "PAID", "order_id": str(order.id), "total": order.total, "wallet_balance": wallet.balance})
+
+
+class WalletOrderStatusView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, order_id):
+        order = CheckoutOrder.objects.filter(id=order_id, user=request.user).first()
+        if not order:
+            return Response({"detail": "Order not found."}, status=404)
+        return Response({"status": order.status, "order_id": str(order.id), "total": order.total})
 
 
 class CreateStripeCheckoutSessionView(APIView):

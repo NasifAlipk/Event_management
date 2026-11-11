@@ -6,6 +6,7 @@ import ExploreLayout from "../../components/layout/Explore/Layout";
 import { checkoutApi } from "../../services/checkout";
 import DigitalTicket from "./DigitalTicket";
 import { ticketsApi } from "../../services/tickets";
+import { walletApi } from "../../services/wallet";
 
 export default function PaymentResult() {
   const location = useLocation();
@@ -17,15 +18,19 @@ export default function PaymentResult() {
   const [ticketCount, setTicketCount] = useState(1);
   const [showTicket, setShowTicket] = useState(false);
   const sessionId = params.get("session_id");
+  const orderId = params.get("order_id");
+  const isWalletPayment = params.get("wallet") === "1";
 
   useEffect(() => {
-    if (!sessionId || status === "CANCELLED") return undefined;
+    if ((!sessionId && !orderId) || status === "CANCELLED") return undefined;
     let active = true;
     let timer;
 
     const poll = async () => {
       try {
-        const { data } = await checkoutApi.stripeSessionStatus(sessionId);
+        const { data } = isWalletPayment
+          ? await walletApi.orderStatus(orderId)
+          : await checkoutApi.stripeSessionStatus(sessionId);
         if (!active) return;
         
         setStatus((current) => (current === data.status ? current : data.status));
@@ -54,7 +59,7 @@ export default function PaymentResult() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [sessionId, status, ticket]);
+  }, [sessionId, orderId, isWalletPayment, status, ticket]);
 
   const successful = status === "PAID";
   const cancelled = status === "CANCELLED" || status === "FAILED";
@@ -67,7 +72,7 @@ export default function PaymentResult() {
     : "Confirming your payment";
     
   const message = successful
-    ? "Your Stripe test payment was verified. Your ticket booking is complete."
+    ? "Your payment was verified. Your ticket booking is complete."
     : cancelled
     ? "The payment was cancelled or could not be completed. No ticket was booked."
     : "Stripe has returned successfully. We are waiting for the secure webhook confirmation.";
