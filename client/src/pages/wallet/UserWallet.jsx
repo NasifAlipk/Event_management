@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowDownLeft, CalendarDays, Filter, WalletCards } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import ProfileEditor from "../../components/home/ProfileEditor";
 import Sidebar from "../../components/layout/profile/UserProfile";
@@ -8,6 +9,7 @@ import { walletApi } from "../../services/wallet";
 const money = (value) => `₹${Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 
 export default function UserWallet() {
+  const navigate = useNavigate();
   const [wallet, setWallet] = useState({ balance: 0, transactions: [] });
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
@@ -34,7 +36,7 @@ export default function UserWallet() {
           <h1 className="mt-2 text-4xl font-semibold sm:text-5xl">{money(wallet.balance)}</h1>
           <div className="mt-7 flex flex-wrap gap-3">
             <button type="button" onClick={() => setNotice("Wallet recharge is not available yet.")} className="inline-flex items-center gap-2 rounded-xl bg-[#00e692] px-5 py-3 font-semibold text-[#03110c]"><WalletCards size={18} />Add Money</button>
-            <button type="button" onClick={() => setNotice("Wallet payments will be available soon.")} className="inline-flex items-center gap-2 rounded-xl border border-[#00ff85] px-5 py-3 font-semibold text-[#00ff85]"><WalletCards size={18} />Pay with Wallet</button>
+            <button type="button" onClick={() => navigate("/events")} className="inline-flex items-center gap-2 rounded-xl border border-[#00ff85] px-5 py-3 font-semibold text-[#00ff85]"><WalletCards size={18} />Pay with Wallet</button>
           </div>
         </section>
 
