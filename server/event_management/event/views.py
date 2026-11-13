@@ -10,6 +10,7 @@ from django.core.paginator import Paginator
 from accounts.permissions import IsAdministrator
 from .models import Event
 from .serializers import EventReviewSerializer, EventSerializer
+from ticket.models import Ticket
 
 
 def event_cancellation_error(event):
@@ -70,6 +71,28 @@ class PublishedEventDetailView(APIView):
         except Event.DoesNotExist:
             return Response({"detail": "Event not found."}, status=status.HTTP_404_NOT_FOUND)
         return Response({"event": EventSerializer(event, context={"request": request}).data})
+
+
+class ParticipatedEventsView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        events = Event.objects.filter(
+            tickets__user=request.user,
+            tickets__order__status="PAID",
+            tickets__status__in=(Ticket.Status.VALID, Ticket.Status.USED),
+        ).distinct().order_by("start_date", "start_time", "id")
+        page_size = 8
+        page_number = max(1, int(request.query_params.get("page", 1) or 1))
+        paginator = Paginator(events, page_size)
+        page = paginator.get_page(page_number)
+        return Response({
+            "events": EventSerializer(page.object_list, many=True, context={"request": request}).data,
+            "total": paginator.count,
+            "page": page.number,
+            "page_size": page_size,
+            "page_count": paginator.num_pages,
+        })
 
 
 class OrganizerEventsView(APIView):

@@ -1,11 +1,14 @@
 import { LogOut, UserRound, Wallet } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
+
 
 export default function UserProfileLayout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isProfile = location.pathname === "/profile";
+  const isWallet = location.pathname === "/wallet";
 
   const signOut = async () => {
     await logout();
@@ -19,22 +22,18 @@ export default function UserProfileLayout() {
       </p>
 
       <nav className="mt-7 space-y-2">
-        <a
-          href="#profile"
-          className="flex items-center gap-2 rounded-lg bg-[#00ff85] px-4 py-2.5 font-semibold text-black"
+        <Link
+          to="/profile"
+          className={`flex items-center gap-2 rounded-lg px-4 py-2.5 font-semibold ${isProfile ? "bg-[#00ff85] text-black" : "text-slate-300 hover:bg-white/10 hover:text-[#00ff85]"}`}
         >
           <UserRound size={16} />
           Profile
-        </a>
+        </Link>
 
-        <button
-          type="button"
-          disabled
-          className="flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-left text-slate-500"
-        >
+        <Link to="/wallet" className={`flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-left font-semibold ${isWallet ? "bg-[#00ff85] text-black" : "text-slate-300 hover:bg-white/10 hover:text-[#00ff85]"}`}>
           <Wallet size={16} />
           Wallet
-        </button>
+        </Link>
 
         <button
           type="button"

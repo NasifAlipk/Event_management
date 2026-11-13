@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -17,6 +17,7 @@ import ExploreLayout from "../../components/layout/Explore/Layout";
 import { useAuth } from "../../hooks/useAuth";
 import { checkoutApi } from "../../services/checkout";
 import { eventsApi } from "../../services/events";
+import { walletApi } from "../../services/wallet";
 
 // --- Utility Functions ---
 const money = (value) => 
@@ -143,6 +144,8 @@ export default function PaymentMethod() {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState("");
   const [creatingSession, setCreatingSession] = useState(false);
+  const walletRequestKey = useId();
+  const [walletBalance, setWalletBalance] = useState(0);
 
   const startStripeCheckout = async () => {
     if (paymentMethod !== "STRIPE") {
@@ -159,6 +162,18 @@ export default function PaymentMethod() {
       window.location.assign(data.checkout_url);
     } catch (requestError) {
       setCouponError(requestError.response?.data?.detail || "Unable to start Stripe Checkout.");
+      setCreatingSession(false);
+    }
+  };
+
+  const startWalletPayment = async () => {
+    setCreatingSession(true);
+    setCouponError("");
+    try {
+      const { data } = await walletApi.pay({ event_id: eventId, ...quantities, coupon: couponCode, idempotency_key: walletRequestKey });
+      navigate(`/booking/payment/success?order_id=${data.order_id}&wallet=1`);
+    } catch (requestError) {
+      setCouponError(requestError.response?.data?.detail || "Unable to complete wallet payment.");
       setCreatingSession(false);
     }
   };
@@ -200,6 +215,17 @@ export default function PaymentMethod() {
     return () => { active = false; };
   }, [eventId, user, quantities]);
 
+  useEffect(() => {
+    if (paymentMethod !== "WALLET") return undefined;
+    let active = true;
+    walletApi.get().then(({ data }) => {
+      if (active) setWalletBalance(Number(data.balance || 0));
+    }).catch(() => {
+      if (active) setWalletBalance(0);
+    });
+    return () => { active = false; };
+  }, [paymentMethod]);
+
   const applyCoupon = async (code = couponCode) => {
     const normalized = code.trim().toUpperCase();
     if (!normalized) { 
@@ -237,6 +263,14 @@ export default function PaymentMethod() {
   }
 
   const venue = [event.venue_name, event.city].filter(Boolean).join(", ") || "Venue to be announced";
+  const walletDiscount = Math.round(Math.max(Number(pricing.ticket_price || 0) - Number(pricing.coupon_discount || 0), 0) * 10) / 100;
+  const displayPricing = paymentMethod === "WALLET" ? {
+    ...pricing,
+    wallet_discount: walletDiscount,
+    gst: Math.round(Math.max(Number(pricing.ticket_price || 0) + Number(pricing.convenience_fee || 0) - Number(pricing.coupon_discount || 0) - walletDiscount, 0) * 18) / 100,
+    total: Number(pricing.ticket_price || 0) + Number(pricing.convenience_fee || 0) - Number(pricing.coupon_discount || 0) - walletDiscount + (Math.round(Math.max(Number(pricing.ticket_price || 0) + Number(pricing.convenience_fee || 0) - Number(pricing.coupon_discount || 0) - walletDiscount, 0) * 18) / 100),
+  } : pricing;
+  const walletInsufficient = paymentMethod === "WALLET" && walletBalance < Number(displayPricing.total || 0);
 
   return (
     <ExploreLayout>
@@ -260,17 +294,22 @@ export default function PaymentMethod() {
                   selected={paymentMethod === "WALLET"} 
                   icon={WalletCards} 
                   title="Wallet" 
-                  description="Available for a future payment integration" 
+                  description={`Balance ${money(walletBalance)} · 10% discount`} 
                   onClick={() => setPaymentMethod("WALLET")} 
                 />
                 <PaymentOption 
                   selected={paymentMethod === "STRIPE"} 
                   icon={CreditCard} 
                   title="Stripe" 
-                  description="Available for a future payment integration" 
+                  description="Pay securely with Stripe test checkout" 
                   onClick={() => setPaymentMethod("STRIPE")} 
                 />
               </div>
+              {paymentMethod === "WALLET" && (
+                <p className={`mt-4 rounded-xl border px-4 py-3 text-sm ${walletInsufficient ? "border-red-400/40 text-red-300" : "border-[#00f5a0]/30 text-[#00f5a0]"}`}>
+                  {walletInsufficient ? "Insufficient wallet balance for this booking." : `Available wallet balance: ${money(walletBalance)}`}
+                </p>
+              )}
             </section>
 
             {/* Coupons Section */}
@@ -356,38 +395,38 @@ export default function PaymentMethod() {
             <div className="space-y-4 border-b border-white/15 py-6 text-sm">
               <p className="flex justify-between gap-4">
                 <span>Ticket Price ({pricing.ticket_count}x)</span>
-                <span>{money(pricing.ticket_price)}</span>
+                <span>{money(displayPricing.ticket_price)}</span>
               </p>
               <p className="flex justify-between gap-4">
                 <span>Convenience Fee</span>
-                <span>{money(pricing.convenience_fee)}</span>
+                <span>{money(displayPricing.convenience_fee)}</span>
               </p>
               <p className="flex justify-between gap-4">
                 <span>GST (18%)</span>
-                <span>{money(pricing.gst)}</span>
+                <span>{money(displayPricing.gst)}</span>
               </p>
               <p className="flex justify-between gap-4 text-[#00f5a0]">
                 <span>Wallet Discount</span>
-                <span>- {money(pricing.wallet_discount)}</span>
+                <span>- {money(displayPricing.wallet_discount)}</span>
               </p>
               <p className="flex justify-between gap-4 text-[#00f5a0]">
                 <span>Coupon Discount</span>
-                <span>- {money(pricing.coupon_discount)}</span>
+                <span>- {money(displayPricing.coupon_discount)}</span>
               </p>
             </div>
 
             <div className="flex items-end justify-between gap-4 py-6">
               <span className="text-xl font-semibold">Total Amount</span>
-              <span className="text-2xl font-semibold text-[#00f5a0]">{money(pricing.total)}</span>
+              <span className="text-2xl font-semibold text-[#00f5a0]">{money(displayPricing.total)}</span>
             </div>
 
             <button
               type="button"
-              disabled={creatingSession}
-              onClick={startStripeCheckout}
+              disabled={creatingSession || walletInsufficient}
+              onClick={paymentMethod === "WALLET" ? startWalletPayment : startStripeCheckout}
               className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#00e692] px-5 py-4 font-semibold text-[#03110c] hover:bg-[#00f5a0] disabled:cursor-wait disabled:opacity-60"
             >
-              <LockKeyhole size={20} />{creatingSession ? "Opening Stripe..." : "Proceed to Pay"} <ArrowRight size={19} />
+              <LockKeyhole size={20} />{creatingSession ? (paymentMethod === "WALLET" ? "Processing wallet..." : "Opening Stripe...") : (paymentMethod === "WALLET" ? "Pay from Wallet" : "Proceed to Pay")} <ArrowRight size={19} />
             </button>
             
             <button 

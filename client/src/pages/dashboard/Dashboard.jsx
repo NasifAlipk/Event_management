@@ -16,7 +16,6 @@ const formatDate = (value) => {
     year: "numeric",
   }).format(date);
 };
-
 const formatTime = (value) => {
   if (!value) return "Time to be announced";
   const [hours, minutes] = value.split(":").map(Number);
@@ -76,6 +75,9 @@ function ParticipatedEventCard({ event }) {
 export default function Dashboard() {
   const { user } = useAuth();
   const [events, setEvents] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageCount, setPageCount] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -83,9 +85,13 @@ export default function Dashboard() {
     let active = true;
 
     eventsApi
-      .participated()
+      .participated({ page })
       .then(({ data }) => {
-        if (active) setEvents(data.events || []);
+        if (active) {
+          setEvents(data.events || []);
+          setPageCount(data.page_count || 1);
+          setTotal(data.total || 0);
+        }
       })
       .catch(() => {
         if (active) {
@@ -100,7 +106,7 @@ export default function Dashboard() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [page]);
 
   return (
     <ExploreLayout>
@@ -123,7 +129,7 @@ export default function Dashboard() {
               <Ticket className="text-[#00ff85]" size={28} />
               <p className="mt-3 text-xs uppercase tracking-wider text-slate-500">Your activity</p>
               <p className="mt-1 text-sm text-slate-300">
-                {events.length} registered {events.length === 1 ? "event" : "events"}
+                {total} registered {total === 1 ? "event" : "events"}
               </p>
             </div>
           </section>
@@ -159,6 +165,37 @@ export default function Dashboard() {
             <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {events.map((event) => <ParticipatedEventCard key={event.id} event={event} />)}
             </section>
+          )}
+
+          {!loading && events.length > 0 && pageCount > 1 && (
+            <nav className="mt-8 flex flex-wrap items-center justify-center gap-2" aria-label="Dashboard pagination">
+              <button
+                type="button"
+                disabled={page === 1}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-300 transition hover:border-[#00ff85] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              {Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => (
+                <button
+                  type="button"
+                  key={number}
+                  onClick={() => setPage(number)}
+                  className={`h-9 min-w-9 rounded-lg px-3 text-sm font-semibold ${number === page ? "bg-[#00ff85] text-black" : "border border-white/15 text-slate-300 hover:border-[#00ff85]"}`}
+                >
+                  {number}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={page === pageCount}
+                onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
+                className="rounded-lg border border-white/15 px-4 py-2 text-sm text-slate-300 transition hover:border-[#00ff85] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </nav>
           )}
         </div>
       </main>
