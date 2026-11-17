@@ -37,6 +37,15 @@ def _paid_orders():
     return CheckoutOrder.objects.filter(status=CheckoutOrder.Status.PAID).select_related("event__organizer")
 
 
+def _ticket_count(queryset):
+    quantities = queryset.aggregate(
+        regular=Sum("regular_quantity"),
+        vip=Sum("vip_quantity"),
+        premium=Sum("premium_quantity"),
+    )
+    return sum((quantities.get(field) or 0) for field in ("regular", "vip", "premium"))
+
+
 class FinanceOverviewView(APIView):
     permission_classes = (IsAuthenticated, IsAdministrator)
 
@@ -53,8 +62,10 @@ class FinanceOverviewView(APIView):
         month_revenue = paid.filter(created_at__date__gte=month_start).aggregate(value=Sum("total"))["value"] or Decimal("0.00")
         yesterday_revenue = paid.filter(created_at__date=yesterday).aggregate(value=Sum("total"))["value"] or Decimal("0.00")
         previous_month_revenue = paid.filter(created_at__date__gte=previous_month_start, created_at__date__lte=previous_month_end).aggregate(value=Sum("total"))["value"] or Decimal("0.00")
-        total_tickets = sum(order.regular_quantity + order.vip_quantity + order.premium_quantity for order in paid.only("regular_quantity", "vip_quantity", "premium_quantity"))
-        previous_month_tickets = sum(order.regular_quantity + order.vip_quantity + order.premium_quantity for order in paid.filter(created_at__date__gte=previous_month_start, created_at__date__lte=previous_month_end).only("regular_quantity", "vip_quantity", "premium_quantity"))
+        # Use database aggregates here. Calling .only() on `paid` would defer
+        # the event field required by its select_related("event__organizer").
+        total_tickets = _ticket_count(paid)
+        previous_month_tickets = _ticket_count(paid.filter(created_at__date__gte=previous_month_start, created_at__date__lte=previous_month_end))
         transactions = CheckoutOrder.objects.all().select_related("event__organizer")
         query = request.query_params.get("q", "").strip()
         event_type = request.query_params.get("event_type", "").strip()
