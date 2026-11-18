@@ -41,6 +41,10 @@ class TicketSerializer(serializers.ModelSerializer):
 class AdminTicketSerializer(TicketSerializer):
     purchased_date = serializers.DateTimeField(source="created_at", read_only=True)
     total_ticket_price = serializers.DecimalField(source="order.total", max_digits=12, decimal_places=2, read_only=True)
+    payment_method = serializers.SerializerMethodField()
+
+    def get_payment_method(self, obj):
+        return "Stripe" if obj.order.stripe_session_id else "Wallet"
 
     class Meta(TicketSerializer.Meta):
-        fields = TicketSerializer.Meta.fields + ("purchased_date", "total_ticket_price")
+        fields = TicketSerializer.Meta.fields + ("purchased_date", "total_ticket_price", "payment_method")

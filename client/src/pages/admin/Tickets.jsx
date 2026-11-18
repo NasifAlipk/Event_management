@@ -59,7 +59,7 @@ export default function Tickets() {
                 <table className="w-full min-w-[900px] text-left text-sm">
                   <thead className="border-b border-white/10 text-xs uppercase text-slate-400 bg-white/[0.02]">
                     <tr>
-                      {["Ticket ID", "Event", "Customer", "Purchased Date", "Total Price", "Status"].map((heading) => (
+                      {["Ticket ID", "Event", "Customer", "Purchased Date", "Total Price", "Payment Method", "Status"].map((heading) => (
                         <th key={heading} className="px-6 py-4 font-semibold tracking-wider">
                           {heading}
                         </th>
@@ -92,6 +92,9 @@ export default function Tickets() {
                             ₹{Number(ticket.total_ticket_price || 0).toLocaleString("en-IN", {
                               minimumFractionDigits: 2,
                             })}
+                          </td>
+                          <td className="px-6 py-4 text-slate-300">
+                            {ticket.payment_method || "—"}
                           </td>
                           <td className="px-6 py-4">
                             <span
