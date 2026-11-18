@@ -6,19 +6,25 @@ export default function Tickets() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [pageCount, setPageCount] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     ticketsApi
-      .admin()
+      .admin({ page })
       .then(({ data }) => {
         setTickets(data.tickets || []);
+        setPage(data.page || 1);
+        setPageCount(data.page_count || 1);
+        setTotal(data.total || 0);
       })
       .catch((err) => {
         console.p("Failed to fetch tickets:", err);
         setError("Failed to load tickets. Please try again later.");
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [page]);
 
   return (
     <Layout>
@@ -37,7 +43,7 @@ export default function Tickets() {
             </div>
             {!loading && tickets.length > 0 && (
               <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-gray-300">
-                Total Tickets: <span className="font-medium text-white">{tickets.length}</span>
+                Total Tickets: <span className="font-medium text-white">{total}</span>
               </div>
             )}
           </div>
@@ -115,6 +121,7 @@ export default function Tickets() {
               </div>
             )}
           </section>
+          {!loading && pageCount > 1 && <nav className="mt-6 flex justify-center gap-2"><button type="button" disabled={page === 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-white/15 px-3 py-2 text-sm disabled:opacity-40">Previous</button>{Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button type="button" key={number} onClick={() => setPage(number)} className={`h-9 min-w-9 rounded-lg px-3 text-sm ${number === page ? "bg-[#00ff85] text-black" : "border border-white/15 text-slate-300"}`}>{number}</button>)}<button type="button" disabled={page === pageCount} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-white/15 px-3 py-2 text-sm disabled:opacity-40">Next</button></nav>}
         </div>
       </main>
     </Layout>

@@ -167,8 +167,14 @@ class AdminEventsView(APIView):
     permission_classes = (IsAuthenticated, IsAdministrator)
 
     def get(self, request):
-        events = Event.objects.select_related("organizer").all()
-        return Response({"events": EventSerializer(events, many=True, context={"request": request}).data})
+        base = Event.objects.select_related("organizer").all()
+        status_filter = request.query_params.get("status", "ALL").upper()
+        events = base.filter(status=status_filter) if status_filter in Event.Status.values else base
+        paginator = Paginator(events.order_by("-created_at", "-id"), 8)
+        page = paginator.get_page(max(1, int(request.query_params.get("page", 1) or 1)))
+        counts = {value: base.filter(status=value).count() for value in Event.Status.values}
+        counts["ALL"] = base.count()
+        return Response({"events": EventSerializer(page.object_list, many=True, context={"request": request}).data, "total": paginator.count, "page": page.number, "page_size": 8, "page_count": paginator.num_pages, "counts": counts})
 
 
 class AdminEventReviewView(APIView):

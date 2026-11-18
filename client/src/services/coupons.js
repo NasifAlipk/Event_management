@@ -6,7 +6,7 @@ export const couponsApi = {
   create: (data) => api.post("/coupons/organizer/", data),
   update: (id, data) => api.patch(`/coupons/organizer/${id}/`, data),
   remove: (id) => api.delete(`/coupons/organizer/${id}/`),
-  admin: () => api.get("/coupons/admin/"),
+  admin: (params = {}) => api.get("/coupons/admin/", { params }),
   adminCoupon: (id) => api.get(`/coupons/admin/${id}/review/`),
   review: (id, status, rejection_reason = "") => api.patch(`/coupons/admin/${id}/review/`, { status, rejection_reason }),
 };
