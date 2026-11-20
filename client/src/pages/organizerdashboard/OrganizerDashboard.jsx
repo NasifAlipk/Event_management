@@ -1,10 +1,8 @@
-
 import { useEffect, useState } from "react";
 import { CalendarDays, Clock3, Ticket } from "lucide-react";
 import Header from "../../components/home/Header";
 import Sidebar from "../../components/layout/profile/OrganizerProfile";
 import { organizerDashboardApi } from "../../services/organizerDashboard";
-
 export default function OrganizerDashboard() {
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState("");
@@ -27,11 +25,9 @@ export default function OrganizerDashboard() {
   return (
     <>
       <Header />
-
       <main className="min-h-screen bg-[#0d1420] px-4 pb-16 pt-24 text-white sm:px-8">
         <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[210px_1fr]">
           <Sidebar />
-
           <section className="min-w-0">
             <div className="rounded-2xl border border-white/10 bg-[#112b2a] p-6">
               <p className="text-sm uppercase tracking-[.25em] text-[#00ff85]">

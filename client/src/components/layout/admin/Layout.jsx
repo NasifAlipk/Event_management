@@ -42,7 +42,7 @@ export default function Layout({ children }) {
             ["Tickets", Ticket, "/admin/tickets"],
             ["Coupons", BadgeDollarSign, "/admin/coupons"],
             ["Achievements", BarChart3],
-            ["Finance", Coins],
+            ["Finance", Coins, "/admin/finance"],
             ["Subscription", Settings],
           ].map(([label, Icon, path]) =>
             path ? (

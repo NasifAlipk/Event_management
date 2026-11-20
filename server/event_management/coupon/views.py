@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.core.paginator import Paginator
 from accounts.permissions import IsAdministrator
 from .models import Coupon
 from .serializers import CouponReviewSerializer, CouponSerializer
@@ -62,8 +63,14 @@ class AdminCouponsView(APIView):
     permission_classes = (IsAuthenticated, IsAdministrator)
 
     def get(self, request):
-        coupons = Coupon.objects.select_related("organizer")
-        return Response({"coupons": CouponSerializer(coupons, many=True).data})
+        base = Coupon.objects.select_related("organizer")
+        status_filter = request.query_params.get("status", "ALL").upper()
+        coupons = base.filter(status=status_filter) if status_filter in Coupon.Status.values else base
+        paginator = Paginator(coupons.order_by("-created_at", "-id"), 8)
+        page = paginator.get_page(max(1, int(request.query_params.get("page", 1) or 1)))
+        counts = {value: base.filter(status=value).count() for value in Coupon.Status.values}
+        counts["ALL"] = base.count()
+        return Response({"coupons": CouponSerializer(page.object_list, many=True).data, "total": paginator.count, "page": page.number, "page_size": 8, "page_count": paginator.num_pages, "counts": counts})
 
 
 class AdminCouponReviewView(APIView):

@@ -6,6 +6,8 @@ from accounts.permissions import IsAdministrator
 from datetime import timedelta
 
 from django.utils import timezone
+from django.core.paginator import Paginator
+from django.db.models import Q
 
 from .models import OrganizerApplication
 from .serializers import OrganizerApplicationReviewSerializer, OrganizerApplicationSerializer
@@ -56,8 +58,17 @@ class AdminOrganizerApplicationsView(APIView):
     permission_classes = (IsAuthenticated, IsAdministrator)
 
     def get(self, request):
-        applications = OrganizerApplication.objects.select_related("user").all()
-        return Response({"applications": OrganizerApplicationSerializer(applications, many=True).data})
+        base = OrganizerApplication.objects.select_related("user").all()
+        query = request.query_params.get("q", "").strip()
+        status_filter = request.query_params.get("status", "ALL").upper()
+        if query:
+            base = base.filter(Q(full_name__icontains=query) | Q(organization_name__icontains=query) | Q(user__email__icontains=query))
+        applications = base.filter(status=status_filter) if status_filter in OrganizerApplication.Status.values else base
+        paginator = Paginator(applications.order_by("-created_at", "-id"), 8)
+        page = paginator.get_page(max(1, int(request.query_params.get("page", 1) or 1)))
+        counts = {value: base.filter(status=value).count() for value in OrganizerApplication.Status.values}
+        counts["ALL"] = base.count()
+        return Response({"applications": OrganizerApplicationSerializer(page.object_list, many=True).data, "total": paginator.count, "page": page.number, "page_size": 8, "page_count": paginator.num_pages, "counts": counts})
 
 
 class AdminOrganizerApplicationDetailView(APIView):

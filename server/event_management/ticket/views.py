@@ -7,6 +7,7 @@ from django.utils import timezone
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.core.paginator import Paginator
 
 from .models import Ticket
 from .permissions import IsAdministrator
@@ -98,5 +99,7 @@ class AdminTicketsView(APIView):
     permission_classes = (IsAuthenticated, IsAdministrator)
 
     def get(self, request):
-        tickets = Ticket.objects.select_related("event", "user", "order").all()
-        return Response({"tickets": AdminTicketSerializer(tickets, many=True, context={"request": request}).data})
+        tickets = Ticket.objects.select_related("event", "user", "order").order_by("-created_at", "-id")
+        paginator = Paginator(tickets, 8)
+        page = paginator.get_page(max(1, int(request.query_params.get("page", 1) or 1)))
+        return Response({"tickets": AdminTicketSerializer(page.object_list, many=True, context={"request": request}).data, "total": paginator.count, "page": page.number, "page_size": 8, "page_count": paginator.num_pages})

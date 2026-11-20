@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -26,29 +26,16 @@ export default function Events() {
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageCount, setPageCount] = useState(1);
+  const [counts, setCounts] = useState({ ALL: 0, PENDING: 0, APPROVED: 0, REJECTED: 0 });
 
   useEffect(() => {
     eventsApi
-      .admin()
-      .then(({ data }) => setEvents(data.events || []))
+      .admin({ page, status: filter })
+      .then(({ data }) => { setEvents(data.events || []); setPage(data.page || 1); setPageCount(data.page_count || 1); setCounts(data.counts || {}); })
       .finally(() => setLoading(false));
-  }, []);
-
-  const counts = useMemo(
-    () => ({
-      ALL: events.length,
-      PENDING: events.filter(
-        (item) => item.status === "PENDING"
-      ).length,
-      APPROVED: events.filter(
-        (item) => item.status === "APPROVED"
-      ).length,
-      REJECTED: events.filter(
-        (item) => item.status === "REJECTED"
-      ).length,
-    }),
-    [events]
-  );
+  }, [page, filter]);
 
   const review = async () => {
     const status =
@@ -82,9 +69,7 @@ export default function Events() {
     }
   };
 
-  const visible = events.filter(
-    (event) => filter === "ALL" || event.status === filter
-  );
+  const visible = events;
 
   return (
     <Layout>
@@ -113,7 +98,7 @@ export default function Events() {
               <button
                 key={value}
                 type="button"
-                onClick={() => setFilter(value)}
+                onClick={() => { setFilter(value); setPage(1); }}
                 className={`rounded-lg px-4 py-2 text-sm ${
                   filter === value
                     ? "bg-[#00ff85] font-semibold text-black"
@@ -249,6 +234,7 @@ export default function Events() {
               </article>
             ))}
           </section>
+          {!loading && pageCount > 1 && <nav className="mt-6 flex justify-center gap-2"><button type="button" disabled={page === 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-white/15 px-3 py-2 text-sm disabled:opacity-40">Previous</button>{Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button type="button" key={number} onClick={() => setPage(number)} className={`h-9 min-w-9 rounded-lg px-3 text-sm ${number === page ? "bg-[#00ff85] text-black" : "border border-white/15 text-slate-300"}`}>{number}</button>)}<button type="button" disabled={page === pageCount} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-white/15 px-3 py-2 text-sm disabled:opacity-40">Next</button></nav>}
         </div>
       </main>
 

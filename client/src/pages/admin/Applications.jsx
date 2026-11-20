@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, Filter, MoreVertical, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -31,44 +31,20 @@ export default function Applications() {
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageCount, setPageCount] = useState(1);
+  const [counts, setCounts] = useState({ ALL: 0, PENDING: 0, APPROVED: 0, REJECTED: 0 });
 
   useEffect(() => {
     organizerApi
-      .adminApplications()
-      .then(({ data }) => setApplications(data.applications || []))
+      .adminApplications({ page, status: filter, q: search })
+      .then(({ data }) => { setApplications(data.applications || []); setPage(data.page || 1); setPageCount(data.page_count || 1); setCounts(data.counts || {}); })
       .finally(() => setLoading(false));
-  }, []);
+  }, [page, filter, search]);
 
-  const counts = useMemo(
-    () => ({
-      ALL: applications.length,
-      PENDING: applications.filter(
-        (item) => item.status === "PENDING",
-      ).length,
-      APPROVED: applications.filter(
-        (item) => item.status === "APPROVED",
-      ).length,
-      REJECTED: applications.filter(
-        (item) => item.status === "REJECTED",
-      ).length,
-    }),
-    [applications],
-  );
-
-  const visible = applications.filter((item) => {
-    const matchesStatus =
-      filter === "ALL" || item.status === filter;
-
-    const query = search.toLowerCase();
-
-    const matchesSearch =
-      !query ||
-      `${item.full_name} ${item.organization_name} ${item.applicant_email}`
-        .toLowerCase()
-        .includes(query);
-
-    return matchesStatus && matchesSearch;
-  });
+  const visible = applications;
+  const changeFilter = (value) => { setFilter(value); setPage(1); };
+  const changeSearch = (value) => { setSearch(value); setPage(1); };
 
   return (
     <Layout>
@@ -98,7 +74,7 @@ export default function Applications() {
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setFilter(value)}
+                  onClick={() => changeFilter(value)}
                   className={`rounded-lg px-3 py-2 text-sm transition ${
                     filter === value
                       ? "bg-[#00ff85] font-semibold text-black"
@@ -120,7 +96,7 @@ export default function Applications() {
                 <input
                   value={search}
                   onChange={(event) =>
-                    setSearch(event.target.value)
+                    changeSearch(event.target.value)
                   }
                   placeholder="Search applications"
                   className="w-40 bg-transparent py-2 text-sm text-white outline-none placeholder:text-slate-500"
@@ -184,12 +160,10 @@ export default function Applications() {
                         </p>
                       </td>
 
-                      {/* Organization */}
                       <td className="px-5 py-4 text-slate-300">
                         {application.organization_name}
                       </td>
 
-                      {/* Organizer type */}
                       <td className="px-5 py-4 capitalize text-slate-300">
                         {application.organizer_type.toLowerCase()}
                       </td>
@@ -250,6 +224,7 @@ export default function Applications() {
               </p>
             )}
           </section>
+          {!loading && pageCount > 1 && <nav className="mt-6 flex justify-center gap-2"><button type="button" disabled={page === 1} onClick={() => setPage((current) => current - 1)} className="rounded-lg border border-white/15 px-3 py-2 text-sm disabled:opacity-40">Previous</button>{Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button type="button" key={number} onClick={() => setPage(number)} className={`h-9 min-w-9 rounded-lg px-3 text-sm ${number === page ? "bg-[#00ff85] text-black" : "border border-white/15 text-slate-300"}`}>{number}</button>)}<button type="button" disabled={page === pageCount} onClick={() => setPage((current) => current + 1)} className="rounded-lg border border-white/15 px-3 py-2 text-sm disabled:opacity-40">Next</button></nav>}
         </div>
       </main>
     </Layout>
