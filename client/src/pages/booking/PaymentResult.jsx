@@ -8,6 +8,7 @@ import DigitalTicket from "./DigitalTicket";
 import { ticketsApi } from "../../services/tickets";
 import { walletApi } from "../../services/wallet";
 
+
 export default function PaymentResult() {
   const location = useLocation();
   const [params] = useSearchParams();
@@ -25,14 +26,12 @@ export default function PaymentResult() {
     if ((!sessionId && !orderId) || status === "CANCELLED") return undefined;
     let active = true;
     let timer;
-
     const poll = async () => {
       try {
         const { data } = isWalletPayment
           ? await walletApi.orderStatus(orderId)
           : await checkoutApi.stripeSessionStatus(sessionId);
         if (!active) return;
-        
         setStatus((current) => (current === data.status ? current : data.status));
         
         if (data.status === "PAID" && data.order_id && !ticket) {
