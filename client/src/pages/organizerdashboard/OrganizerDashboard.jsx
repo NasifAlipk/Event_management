@@ -49,10 +49,14 @@ function formatTime(value) {
 
 function Stat({ icon: Icon, label, value }) {
   return (
-    <div className="border-r border-white/10 p-4 last:border-0">
+    <div className="min-w-0 overflow-hidden border-r border-white/10 p-3 last:border-0 sm:p-4">
       <Icon size={17} className="text-[#00ff85]" />
-      <p className="mt-3 text-2xl font-semibold">{value}</p>
-      <p className="mt-1 text-xs text-slate-400">{label}</p>
+      <p className="mt-3 min-w-0 truncate text-[clamp(0.85rem,2.3vw,1.5rem)] font-semibold tracking-tight">
+        {value}
+      </p>
+      <p className="mt-1 min-h-8 text-xs leading-4 text-slate-400">
+        {label}
+      </p>
     </div>
   );
 }
@@ -101,7 +105,7 @@ function PerformanceSection({ data }) {
   return (
     <section className="rounded-xl border border-white/10 bg-[#0d171e] p-4">
       <h2 className="text-sm font-semibold">Performance Overview</h2>
-      <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 border-y border-white/10 sm:grid-cols-4 sm:divide-x">
+      <div className="mt-4 grid min-w-0 grid-cols-2 divide-x divide-white/10 border-y border-white/10 sm:grid-cols-4">
         <Stat
           icon={CalendarDays}
           label="Total Events"
@@ -358,9 +362,6 @@ export default function OrganizerDashboard() {
   useEffect(() => {
     let active = true;
 
-    setLoading(true);
-    setError("");
-
     organizerDashboardApi
       .summary({ period })
       .then(({ data }) => {
@@ -410,7 +411,7 @@ export default function OrganizerDashboard() {
     <DashboardShell>
       <ProfileCard profile={data.profile} />
 
-      <div className="grid gap-5 xl:grid-cols-[1.05fr_1.95fr]">
+      <div className="grid gap-5 xl:grid-cols-[3fr_2fr]">
         <PerformanceSection data={data} />
         <EarningsSection
           earnings={data.earnings}
