@@ -1,5 +1,5 @@
 import api from "./api";
 
 export const organizerDashboardApi = {
-  summary: () => api.get("/organizer-dashboard/"),
+  summary: (params = {}) => api.get("/organizer-dashboard/", { params }),
 };
