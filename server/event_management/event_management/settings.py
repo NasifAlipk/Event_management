@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'event',
     'coupon',
     'organizerdashboard',
+    'admindashboard',
     'checkout',
     'paymentmethod',
     'ticket',
