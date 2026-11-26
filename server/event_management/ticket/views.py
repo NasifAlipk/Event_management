@@ -112,6 +112,11 @@ class AdminTicketsView(APIView):
 
     def get(self, request):
         tickets = Ticket.objects.select_related("event", "user", "order").order_by("-created_at", "-id")
+        ticket_stats = {
+            "total": Ticket.objects.count(),
+            "valid": Ticket.objects.filter(status=Ticket.Status.VALID).count(),
+            "cancelled": Ticket.objects.filter(status=Ticket.Status.CANCELLED).count(),
+        }
         paginator = Paginator(tickets, 8)
         page = paginator.get_page(max(1, int(request.query_params.get("page", 1) or 1)))
-        return Response({"tickets": AdminTicketSerializer(page.object_list, many=True, context={"request": request}).data, "total": paginator.count, "page": page.number, "page_size": 8, "page_count": paginator.num_pages})
+        return Response({"tickets": AdminTicketSerializer(page.object_list, many=True, context={"request": request}).data, "total": paginator.count, "page": page.number, "page_size": 8, "page_count": paginator.num_pages, "statistics": ticket_stats})
