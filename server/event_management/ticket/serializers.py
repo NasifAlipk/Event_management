@@ -14,16 +14,21 @@ class TicketSerializer(serializers.ModelSerializer):
     event_date = serializers.DateField(source="event.start_date", read_only=True)
     event_time = serializers.TimeField(source="event.start_time", read_only=True)
     location = serializers.SerializerMethodField()
+    venue = serializers.CharField(source="event.venue_name", read_only=True)
+    address = serializers.SerializerMethodField()
     customer_name = serializers.SerializerMethodField()
     qr_payload = serializers.SerializerMethodField()
     qr_code = serializers.SerializerMethodField()
 
     class Meta:
         model = Ticket
-        fields = ("id", "event_id", "event_name", "event_image", "event_date", "event_time", "location", "ticket_type", "price", "status", "created_at", "customer_name", "qr_payload", "qr_code")
+        fields = ("id", "event_id", "event_name", "event_image", "event_date", "event_time", "venue", "address", "location", "ticket_type", "price", "status", "created_at", "customer_name", "qr_payload", "qr_code")
 
     def get_location(self, obj):
         return ", ".join(filter(None, (obj.event.venue_name, obj.event.city, obj.event.state, obj.event.country)))
+
+    def get_address(self, obj):
+        return ", ".join(filter(None, (obj.event.address, obj.event.city, obj.event.state, obj.event.country, obj.event.pin_code)))
 
     def get_customer_name(self, obj):
         return obj.user.get_full_name() or obj.user.username

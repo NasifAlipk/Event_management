@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { CalendarDays, Clock3, Ticket as TicketIcon } from "lucide-react";
+import { CalendarDays, Clock3, QrCode, Ticket as TicketIcon } from "lucide-react";
 
 import DigitalTicket from "../booking/DigitalTicket";
 import ProfileEditor from "../../components/home/ProfileEditor";
 import Sidebar from "../../components/layout/profile/UserProfile";
 import { ticketsApi } from "../../services/tickets";
 import ConfirmModal from "../../components/ui/ConfirmModal";
+import TicketPurchaseSummary from "../booking/TicketPurchaseSummary";
 
 const formatTime = (value) => {
   if (!value) return "Time to be announced";
@@ -18,7 +19,7 @@ const formatTime = (value) => {
       }).format(new Date(2000, 0, 1, hours, minutes));
 };
 
-function BookingCard({ booking, onMore, onCancel }) {
+function BookingCard({ booking, onMore, onQr, onCancel }) {
   const ticket = booking.ticket;
 
   return (
@@ -52,14 +53,17 @@ function BookingCard({ booking, onMore, onCancel }) {
       </div>
 
       <div className="flex shrink-0 flex-col gap-2 self-center">
-        <button type="button" onClick={() => onMore(booking)} className="rounded-lg bg-[#00ff85] px-3 py-2 text-xs font-semibold text-black hover:bg-[#00d970]">More</button>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => onQr(booking)} aria-label="View digital ticket" className="grid h-8 w-8 place-items-center rounded-lg border border-[#00ff85]/50 text-[#00ff85] hover:bg-[#00ff85]/10"><QrCode size={15} /></button>
+          <button type="button" onClick={() => onMore(booking)} className="rounded-lg bg-[#00ff85] px-3 py-2 text-xs font-semibold text-black hover:bg-[#00d970]">More</button>
+        </div>
         {booking.can_cancel && <button type="button" onClick={() => onCancel(booking)} className="rounded-lg border border-red-400/40 px-3 py-2 text-xs text-red-300 hover:bg-red-400/10">Cancel Ticket</button>}
       </div>
     </article>
   );
 }
 
-function BookingSection({ title, icon: Icon, bookings, message, onMore, onCancel }) {
+function BookingSection({ title, icon: Icon, bookings, message, onMore, onQr, onCancel }) {
   return (
     <section className="rounded-2xl border border-white/10 bg-[#171e2b] p-5">
       <div className="flex items-center gap-2">
@@ -69,8 +73,8 @@ function BookingSection({ title, icon: Icon, bookings, message, onMore, onCancel
 
       <div className="mt-5 space-y-3">
         {bookings.length ? (
-          bookings.map((booking) => (
-            <BookingCard key={booking.id} booking={booking} onMore={onMore} onCancel={onCancel} />
+            bookings.map((booking) => (
+            <BookingCard key={booking.id} booking={booking} onMore={onMore} onQr={onQr} onCancel={onCancel} />
           ))
         ) : (
           <p className="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-slate-400">
@@ -86,6 +90,7 @@ export default function UserProfile() {
   const [bookings, setBookings] = useState([]);
   const [stats, setStats] = useState({ tickets_booked: 0, events_attended: 0 });
   const [selected, setSelected] = useState(null);
+  const [selectedSummary, setSelectedSummary] = useState(null);
   const [selectedCancel, setSelectedCancel] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [message, setMessage] = useState("");
@@ -156,7 +161,8 @@ export default function UserProfile() {
             icon={TicketIcon}
             bookings={booked}
             message="Your upcoming booked tickets will appear here."
-            onMore={setSelected}
+            onMore={setSelectedSummary}
+            onQr={setSelected}
             onCancel={setSelectedCancel}
           />
           <BookingSection
@@ -164,7 +170,8 @@ export default function UserProfile() {
             icon={CalendarDays}
             bookings={attended}
             message="Your attended events will appear here."
-            onMore={setSelected}
+            onMore={setSelectedSummary}
+            onQr={setSelected}
             onCancel={setSelectedCancel}
           />
         </div>
@@ -177,6 +184,7 @@ export default function UserProfile() {
           onClose={() => setSelected(null)}
         />
       )}
+      {selectedSummary && <TicketPurchaseSummary booking={selectedSummary} onClose={() => setSelectedSummary(null)} />}
       {selectedCancel && <ConfirmModal type="cancel" title="Cancel Ticket?" message="Are you sure you want to cancel this ticket? Once cancelled, this action cannot be undone. Your applicable refund will be processed according to the refund policy." confirmLabel="Yes, Cancel Ticket" cancelLabel="Keep Ticket" loading={cancelling} onCancel={() => !cancelling && setSelectedCancel(null)} onConfirm={cancelBooking} />}
     </ProfileEditor>
   );
