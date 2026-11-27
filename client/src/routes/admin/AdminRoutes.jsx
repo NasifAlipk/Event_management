@@ -9,7 +9,7 @@ import AdminCustomersPage from "../../pages/admin/Customers.jsx";
 import AdminEventDetailsPage from "../../pages/admin/EventDetails.jsx";
 import AdminEventsPage from "../../pages/admin/Events.jsx";
 import AdminForgotPassword from "../../pages/admin/ForgotPassword.jsx";
-import AdminHomePage from "../../pages/admin/Home.jsx";
+import AdminHomePage from "../../pages/admin/Dashboard.jsx";
 import AdminLoginPage from "../../pages/admin/Login.jsx";
 import AdminProfilePage from "../../pages/admin/Profile.jsx";
 import AdminResetPassword from "../../pages/admin/ResetPassword.jsx";

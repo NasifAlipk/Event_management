@@ -46,6 +46,17 @@ class ProfileTicketsView(APIView):
                 grouped[key] = {
                     "id": key,
                     "ticket": TicketSerializer(ticket, context={"request": request}).data,
+                    "tickets": [],
+                    "booking_id": key,
+                    "booking_date": ticket.order.created_at,
+                    "payment_method": "Stripe" if ticket.order.stripe_session_id else "Wallet",
+                    "ticket_amount": ticket.order.ticket_price,
+                    "convenience_fee": ticket.order.convenience_fee,
+                    "gst": ticket.order.gst,
+                    "coupon_discount": ticket.order.coupon_discount,
+                    "wallet_discount": ticket.order.wallet_discount,
+                    "total_amount": ticket.order.total,
+                    "payment_status": ticket.order.status,
                     "ticket_count": 0,
                     "ticket_types": {},
                     "attended": start <= now and ticket.status != Ticket.Status.CANCELLED,
@@ -54,6 +65,7 @@ class ProfileTicketsView(APIView):
                     "cancelled": ticket.status == Ticket.Status.CANCELLED,
                 }
             booking = grouped[key]
+            booking["tickets"].append(TicketSerializer(ticket, context={"request": request}).data)
             booking["ticket_count"] += 1
             booking["ticket_ids"].append(str(ticket.id))
             booking["ticket_types"][ticket.ticket_type] = booking["ticket_types"].get(ticket.ticket_type, 0) + 1
@@ -100,6 +112,11 @@ class AdminTicketsView(APIView):
 
     def get(self, request):
         tickets = Ticket.objects.select_related("event", "user", "order").order_by("-created_at", "-id")
+        ticket_stats = {
+            "total": Ticket.objects.count(),
+            "valid": Ticket.objects.filter(status=Ticket.Status.VALID).count(),
+            "cancelled": Ticket.objects.filter(status=Ticket.Status.CANCELLED).count(),
+        }
         paginator = Paginator(tickets, 8)
         page = paginator.get_page(max(1, int(request.query_params.get("page", 1) or 1)))
-        return Response({"tickets": AdminTicketSerializer(page.object_list, many=True, context={"request": request}).data, "total": paginator.count, "page": page.number, "page_size": 8, "page_count": paginator.num_pages})
+        return Response({"tickets": AdminTicketSerializer(page.object_list, many=True, context={"request": request}).data, "total": paginator.count, "page": page.number, "page_size": 8, "page_count": paginator.num_pages, "statistics": ticket_stats})

@@ -10,6 +10,7 @@ import {
   MapPin, 
   Tag, 
   WalletCards 
+
 } from "lucide-react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -19,7 +20,6 @@ import { checkoutApi } from "../../services/checkout";
 import { eventsApi } from "../../services/events";
 import { walletApi } from "../../services/wallet";
 
-// --- Utility Functions ---
 const money = (value) => 
   `₹${Number(value || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
 
@@ -43,7 +43,6 @@ const timeText = (value) => {
   }).format(new Date(2000, 0, 1, hour, minute));
 };
 
-// --- Sub-Components ---
 function PaymentOption({ selected, icon: Icon, title, description, onClick }) {
   return (
     <button 
