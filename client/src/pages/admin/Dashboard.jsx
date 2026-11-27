@@ -340,6 +340,7 @@ export default function Dashboard() {
               </div>
             </section>
 
+
             <section className="rounded-2xl border border-white/10 bg-[#151c2d] p-5">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Tickets Statistics</h3>
